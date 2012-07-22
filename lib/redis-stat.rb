@@ -13,7 +13,7 @@ class RedisStat
 
   def initialize options = {}
     @options   = RedisStat::Option::DEFAULT.merge options
-    @redis     = Redis.new(@options.select { |k, _| [:host, :port].include? k })
+    @redis     = Redis.new(Hash[ @options.select { |k, _| [:host, :port].include? k } ])
     @max_count = @options[:count]
     @count     = 0
     @colors    = @options[:colors] || COLORS
@@ -202,7 +202,7 @@ private
       val = get_diff.call(key)
       [humanize_number(val), val]
     when :keys
-      val = info.select { |k, v| k =~ /^db[0-9]+$/ }.values.inject(0) { |sum, v| 
+      val = Hash[ info.select { |k, v| k =~ /^db[0-9]+$/ } ].values.inject(0) { |sum, v| 
         sum + Hash[ v.split(',').map { |e| e.split '=' } ]['keys'].to_i
       }
       [humanize_number(val), val]
