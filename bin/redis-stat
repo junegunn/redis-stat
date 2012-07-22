@@ -5,4 +5,4 @@ require 'redis-stat'
 
 options = RedisStat::Option.parse ARGV
 rs = RedisStat.new options
-rs.start
+rs.start $stdout

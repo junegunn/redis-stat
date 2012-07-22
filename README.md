@@ -33,6 +33,11 @@ redis-stat localhost:6380 1 10
 redis-stat localhost:6380 1 10 --csv=/tmp/output.csv --verbose
 ```
 
+## Screenshot
+
+![](https://github.com/junegunn/redis-stat/raw/master/screenshots/redis-stat-0.1.0.png)
+
+
 ## Contributing
 
 1. Fork it

@@ -67,7 +67,7 @@ class TestRedisStat < Test::Unit::TestCase
 
   def test_start
     rs = RedisStat.new :interval => 0.1, :count => 200, :verbose => true, :csv => '/tmp/redis-stat.csv'
-    rs.start
+    rs.start $stdout
   end
 end
 

@@ -7,8 +7,9 @@ require 'ansi'
 require 'csv'
 
 class RedisStat
-  DEFAULT_TERM_WIDTH  = 150
-  DEFAULT_TERM_HEIGHT = 40
+  DEFAULT_TERM_WIDTH  = 180
+  DEFAULT_TERM_HEIGHT = 25
+  MAX_TERM_HEIGHT     = 50
 
   def initialize options = {}
     @options   = RedisStat::Option::DEFAULT.merge options
@@ -18,7 +19,7 @@ class RedisStat
     @colors    = @options[:colors] || COLORS
   end
 
-  def start output_stream = $stdout
+  def start output_stream
     @os = output_stream
     trap('INT') { Thread.main.raise Interrupt }
 
@@ -55,8 +56,8 @@ class RedisStat
 
 private
   def update_term_size!
-    @term_width  = (`tput cols`  rescue DEFAULT_TERM_HEIGHT).to_i
-    @term_height = (`tput lines` rescue DEFAULT_TERM_HEIGHT).to_i - 4
+    @term_width  = (`tput cols`  rescue DEFAULT_TERM_WIDTH).to_i
+    @term_height = [MAX_TERM_HEIGHT, (`tput lines` rescue DEFAULT_TERM_HEIGHT).to_i - 4].min
   end
 
   def move! lines
@@ -163,6 +164,11 @@ private
   def init_table info_output
     @table = Tabularize.new :unicode => false,
                        :align => :right,
+                       :hborder => ansi(:black, :bold) { '-' },
+                       :iborder => ansi(:black, :bold) { '+' },
+                       :vborder => ' ',
+                       :pad_left => 0,
+                       :pad_right => 0,
                        :screen_width => @term_width
     @table << info_output.map { |pair|
       ansi(*((@colors[pair.first] || []) + [:underline])) {
@@ -194,6 +200,11 @@ private
       Time.now.strftime('%H:%M:%S')
     when :used_cpu_user, :used_cpu_sys
       val = get_diff.call(key)
+      [humanize_number(val), val]
+    when :keys
+      val = info.select { |k, v| k =~ /^db[0-9]+$/ }.values.inject(0) { |sum, v| 
+        sum + Hash[ v.split(',').map { |e| e.split '=' } ]['keys'].to_i
+      }
       [humanize_number(val), val]
     when :evicted_keys_per_second, :expired_keys_per_second, :keyspace_hits_per_second,
          :keyspace_misses_per_second, :total_commands_processed_per_second
@@ -252,8 +263,8 @@ private
       :blocked_clients,
       :used_memory,
       :used_memory_rss,
+      :keys,
       :total_commands_processed_per_second,
-      :total_commands_processed,
       :expired_keys_per_second,
       :evicted_keys_per_second,
       :keyspace_hits_per_second,
@@ -270,6 +281,7 @@ private
       :used_memory,
       :used_memory_rss,
       :mem_fragmentation_ratio,
+      :keys,
       :total_commands_processed_per_second,
       :total_commands_processed,
       :expired_keys_per_second,
@@ -296,6 +308,7 @@ private
     :used_memory                         => [:green],
     :used_memory_rss                     => [:green],
     :mem_fragmentation_ratio             => [:green],
+    :keys                                => [:bold],
     :total_commands_processed            => [:blue, :bold],
     :total_commands_processed_per_second => [:blue, :bold],
     :expired_keys                        => [:red],
