@@ -13,7 +13,7 @@ gem install redis-stat
 ```
 usage: redis-stat [HOST[:PORT]] [INTERVAL [COUNT]]
 
-        --csv=OUTPUT_CSV_FILE_PATH   Saves the result in CSV format
+        --csv=OUTPUT_CSV_FILE_PATH   Save the result in CSV format
     -v, --verbose                    Show more info
         --version                    Show version
         --help                       Show this message
