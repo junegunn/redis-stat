@@ -9,7 +9,6 @@ require 'csv'
 class RedisStat
   DEFAULT_TERM_WIDTH  = 180
   DEFAULT_TERM_HEIGHT = 25
-  MAX_TERM_HEIGHT     = 50
 
   def initialize options = {}
     @options   = RedisStat::Option::DEFAULT.merge options
@@ -57,7 +56,7 @@ class RedisStat
 private
   def update_term_size!
     @term_width  = (`tput cols`  rescue DEFAULT_TERM_WIDTH).to_i
-    @term_height = [MAX_TERM_HEIGHT, (`tput lines` rescue DEFAULT_TERM_HEIGHT).to_i - 4].min
+    @term_height = (`tput lines` rescue DEFAULT_TERM_HEIGHT).to_i - 4
   end
 
   def move! lines
