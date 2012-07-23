@@ -55,6 +55,18 @@ class RedisStat
 
 private
   def update_term_size!
+    if RUBY_PLATFORM.match(/java/)
+      require 'java'
+      begin
+        @term ||= Java::jline.Terminal.getTerminal
+        @term_width  = (@term.getTerminalWidth rescue DEFAULT_TERM_WIDTH)
+        @term_height = (@term.getTerminalHeight rescue DEFAULT_TERM_HEIGHT) - 4
+        return
+      rescue Exception
+        # Fallback to tput (which yields incorrect values as of now)
+      end
+    end
+
     @term_width  = (`tput cols`  rescue DEFAULT_TERM_WIDTH).to_i
     @term_height = (`tput lines` rescue DEFAULT_TERM_HEIGHT).to_i - 4
   end
