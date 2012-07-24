@@ -22,18 +22,19 @@ class RedisStat
     @os = output_stream
     trap('INT') { Thread.main.raise Interrupt }
 
-    @csv = File.open(@options[:csv], 'w') if @options[:csv]
+    csv = File.open(@options[:csv], 'w') if @options[:csv]
     update_term_size!
 
+    prev_info = nil
     begin
       @started_at = Time.now
       loop do
-        @info = @redis.info.insensitive
-        @info[:at] = Time.now.to_f
+        info = @redis.info.insensitive
+        info[:at] = Time.now.to_f
 
-        output @info, @prev_info, @csv
+        output info, prev_info, csv
 
-        @prev_info = @info
+        prev_info = info
         @count += 1
         break if @max_count && @count >= @max_count
         sleep @options[:interval]
@@ -46,7 +47,7 @@ class RedisStat
       @os.puts ansi(:red, :bold) { e.to_s }
       exit 1
     ensure
-      @csv.close if @csv
+      csv.close if csv
     end
     @os.puts ansi(:blue, :bold) {
       "Elapsed: #{"%.2f" % (Time.now - @started_at)} sec."
