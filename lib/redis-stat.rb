@@ -249,7 +249,7 @@ private
     sign = num >= 0 ? '' : '-'
     num  = num.abs
     mult = k.to_f
-    ['', 'K', 'M', 'G', 'T', 'P', 'E'].each_with_index do |mp|
+    ['', 'K', 'M', 'G', 'T', 'P', 'E'].each do |mp|
       return sign + format_number(num * k / mult) + mp + suffix if num < mult || mp == 'E'
       mult *= k
     end
