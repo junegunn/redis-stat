@@ -6,6 +6,7 @@ require 'redis-stat'
 class TestRedisStat < Test::Unit::TestCase
   def test_humanize_number
     rs = RedisStat.new
+    assert_equal '0', rs.send(:humanize_number, 0.00)
     assert_equal '7', rs.send(:humanize_number, 7)
     assert_equal '0.01', rs.send(:humanize_number, 0.00751)
     assert_equal '0.08', rs.send(:humanize_number, 0.0751)

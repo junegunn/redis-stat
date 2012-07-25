@@ -246,7 +246,7 @@ private
   def humanize_number num, k = 1000, suffix = ''
     return '-' if num.nil?
 
-    sign = num > 0 ? '' : '-'
+    sign = num >= 0 ? '' : '-'
     num  = num.abs
     mult = k.to_f
     ['', 'K', 'M', 'G', 'T', 'P', 'E'].each_with_index do |mp|
