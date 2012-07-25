@@ -243,19 +243,17 @@ private
     end.to_s
   end
 
-  def humanize_number bytes, k = 1000, suffix = ''
-    return '-' if bytes.nil?
+  def humanize_number num, k = 1000, suffix = ''
+    return '-' if num.nil?
 
-    bytes = bytes.to_f
-    if bytes < k
-      format_number(bytes)
-    elsif bytes < k ** 2
-      format_number(bytes / k) + 'K' + suffix
-    elsif bytes < k ** 3
-      format_number(bytes / k ** 2) + 'M' + suffix
-    else
-      format_number(bytes / k ** 3) + 'G' + suffix
+    sign = num > 0 ? '' : '-'
+    num  = num.abs
+    mult = k.to_f
+    ['', 'K', 'M', 'G', 'T', 'P', 'E'].each_with_index do |mp|
+      return sign + format_number(num * k / mult) + mp + suffix if num < mult || mp == 'E'
+      mult *= k
     end
+    return nil
   end
 
   def ansi *args, &block
