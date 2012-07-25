@@ -43,8 +43,7 @@ class TestRedisStat < Test::Unit::TestCase
 
     options = RedisStat::Option.parse(%w[localhost:1000 20])
     assert_equal({
-      :host => 'localhost',
-      :port => 1000,
+      :hosts => ['localhost:1000'],
       :interval => 20,
       :count => nil,
       :csv => nil
@@ -52,8 +51,7 @@ class TestRedisStat < Test::Unit::TestCase
 
     options = RedisStat::Option.parse(%w[localhost:1000 20 30])
     assert_equal({
-      :host => 'localhost',
-      :port => 1000,
+      :hosts => ['localhost:1000'],
       :interval => 20,
       :count => 30,
       :csv => nil
@@ -61,8 +59,7 @@ class TestRedisStat < Test::Unit::TestCase
 
     options = RedisStat::Option.parse(%w[20])
     assert_equal({
-      :host => '127.0.0.1',
-      :port => 6379,
+      :hosts => ['127.0.0.1:6379'],
       :interval => 20,
       :count => nil,
       :csv => nil
@@ -70,8 +67,7 @@ class TestRedisStat < Test::Unit::TestCase
 
     options = RedisStat::Option.parse(%w[20 30])
     assert_equal({
-      :host => '127.0.0.1',
-      :port => 6379,
+      :hosts => ['127.0.0.1:6379'],
       :interval => 20,
       :count => 30,
       :csv => nil
@@ -79,8 +75,7 @@ class TestRedisStat < Test::Unit::TestCase
 
     options = RedisStat::Option.parse(%w[localhost:8888 10 --csv=/tmp/a.csv])
     assert_equal({
-      :port => 8888,
-      :host => 'localhost',
+      :hosts => ['localhost:8888'],
       :interval => 10,
       :count => nil,
       :csv => '/tmp/a.csv',
@@ -101,7 +96,7 @@ class TestRedisStat < Test::Unit::TestCase
   def test_start
     csv = '/tmp/redis-stat.csv'
     cnt = 50
-    rs = RedisStat.new :interval => 0.01, :count => cnt, :verbose => true, :csv => csv
+    rs = RedisStat.new :hosts => %w[localhost] * 5, :interval => 0.1, :count => cnt, :verbose => true, :csv => csv
     rs.start $stdout
 
     assert_equal cnt + 1, File.read(csv).lines.to_a.length

@@ -5,6 +5,7 @@ require 'redis'
 require 'tabularize'
 require 'ansi'
 require 'csv'
+require 'parallelize'
 
 class RedisStat
   DEFAULT_TERM_WIDTH  = 180
@@ -12,7 +13,11 @@ class RedisStat
 
   def initialize options = {}
     @options   = RedisStat::Option::DEFAULT.merge options
-    @redis     = Redis.new(Hash[ @options.select { |k, _| [:host, :port].include? k } ])
+    @hosts     = @options[:hosts]
+    @redises   = @hosts.map { |e| 
+      host, port = e.split(':')
+      Redis.new(Hash[ {:host => host, :port => port}.select { |k, v| v } ])
+    }
     @max_count = @options[:count]
     @count     = 0
     @colors    = @options[:colors] || COLORS
@@ -25,12 +30,30 @@ class RedisStat
     csv = File.open(@options[:csv], 'w') if @options[:csv]
     update_term_size!
 
-    prev_info = nil
+
     begin
+      # Warm-up
+      @redises.each { |r| r.info }
+
       @started_at = Time.now
+      prev_info = nil
       loop do
-        info = @redis.info.insensitive
+        info = {}.insensitive
+        class << info
+          def sumf label
+            (self[label] || []).map(&:to_f).inject(:+)
+          end
+        end
+
         info[:at] = Time.now.to_f
+        @redises.pmap(@redises.length) { |redis|
+          redis.info.insensitive
+        }.each do |rinfo|
+          rinfo.each do |k, v|
+            info[k] ||= []
+            info[k] << v
+          end
+        end
 
         output info, prev_info, csv
 
@@ -98,9 +121,9 @@ private
 
     movement = nil
     if @count == 0
-      movement = 0
       output_static_info info
 
+      movement = 0
       if file
         file.puts CSV.generate_line(info_output.map { |pair|
           LABELS[pair.first] || pair.first
@@ -147,30 +170,28 @@ private
   end
 
   def output_static_info info
-    data = 
-      {
-        :redis_stat_version => RedisStat::VERSION,
-        :redis_host         => @options[:host],
-        :redis_port         => @options[:port],
-        :csv                => @options[:csv],
-      }.merge(
-        Hash[
-          [
-            :redis_version,
-            :process_id,
-            :uptime_in_seconds,
-            :uptime_in_days,
-            :gcc_version,
-            :role,
-            :connected_slaves, # FIXME: not so static
-            :aof_enabled,
-            :vm_enabled
-          ].map { |k| [k, info[k]] }
-        ]
-      ).reject { |k, v| v.nil? }.to_a
-    @os.puts Tabularize.it(data, :align => :left).map { |pair| 
-      ansi(:bold) { pair.first } + ' : ' + pair.last
-    }
+    tab = Tabularize.new(
+      :unicode => false, :align => :right,
+      :hborder => ansi(:black, :bold) { '-' },
+      :vborder => ansi(:black, :bold) { '|' },
+      :iborder => ansi(:black, :bold) { '+' }
+    )
+    tab << [nil] + @hosts.map { |h| ansi(:bold, :green) { h } }
+    tab.separator!
+    [
+      :redis_version,
+      :process_id,
+      :uptime_in_seconds,
+      :uptime_in_days,
+      :gcc_version,
+      :role,
+      :connected_slaves,
+      :aof_enabled,
+      :vm_enabled
+    ].each do |key|
+      tab << [ansi(:bold) { key }] + info[key]
+    end
+    @os.puts tab
   end
 
   def init_table info_output
@@ -179,6 +200,7 @@ private
                        :hborder => ansi(:black, :bold) { '-' },
                        :iborder => ansi(:black, :bold) { '+' },
                        :vborder => ' ',
+                       :ellipsis => ansi(:bold) { '>' },
                        :pad_left => 0,
                        :pad_right => 0,
                        :screen_width => @term_width
@@ -201,7 +223,7 @@ private
 
     get_diff = lambda do |label|
       if dur && dur > 0
-        (info[label].to_f - prev_info[label].to_f) / dur
+        (info.sumf(label) - prev_info.sumf(label)) / dur
       else
         nil
       end
@@ -214,8 +236,8 @@ private
       val = get_diff.call(key)
       [humanize_number(val), val]
     when :keys
-      val = Hash[ info.select { |k, v| k =~ /^db[0-9]+$/ } ].values.inject(0) { |sum, v| 
-        sum + Hash[ v.split(',').map { |e| e.split '=' } ]['keys'].to_i
+      val = Hash[ info.select { |k, v| k =~ /^db[0-9]+$/ } ].values.inject(0) { |sum, vs| 
+        sum + vs.map { |v| Hash[ v.split(',').map { |e| e.split '=' } ]['keys'].to_i }.inject(:+)
       }
       [humanize_number(val), val]
     when :evicted_keys_per_second, :expired_keys_per_second, :keyspace_hits_per_second,
@@ -223,11 +245,13 @@ private
       val = get_diff.call(key.to_s.gsub(/_per_second$/, '').to_sym)
       [humanize_number(val), val]
     when :total_commands_processed, :evicted_keys, :expired_keys, :keyspace_hits, :keyspace_misses
-      [humanize_number(info[key].to_i), info[key]]
+      val = info.sumf(key)
+      [humanize_number(val.to_i), val]
     when :used_memory, :used_memory_rss, :aof_current_size, :aof_base_size
-      [humanize_number(info[key].to_i, 1024, 'B'), info[key]]
+      val = info.sumf(key)
+      [humanize_number(val.to_i, 1024, 'B'), val]
     else
-      info[key]
+      format_number info.sumf(key)
     end
   end
 

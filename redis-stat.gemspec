@@ -19,6 +19,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency "redis", '~> 3.0.1'
   gem.add_runtime_dependency "tabularize", '~> 0.2.4'
   gem.add_runtime_dependency "insensitive_hash", '~> 0.2.4'
+  gem.add_runtime_dependency "parallelize", '~> 0.4.0'
 
   gem.add_development_dependency 'test-unit'
 end

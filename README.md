@@ -11,7 +11,7 @@ gem install redis-stat
 ## Usage
 
 ```
-usage: redis-stat [HOST[:PORT]] [INTERVAL [COUNT]]
+usage: redis-stat [HOST[:PORT] ...] [INTERVAL [COUNT]]
 
         --csv=OUTPUT_CSV_FILE_PATH   Save the result in CSV format
     -v, --verbose                    Show more info
@@ -26,11 +26,13 @@ redis-stat
 
 redis-stat 1
 
-redis-stat localhost:6380
+redis-stat 1 10
 
 redis-stat localhost:6380 1 10
 
-redis-stat localhost:6380 1 10 --csv=/tmp/output.csv --verbose
+redis-stat localhost localhost:6380 localhost:6381 5
+
+redis-stat localhost localhost:6380 1 10 --csv=/tmp/output.csv --verbose
 ```
 
 ## Screenshot

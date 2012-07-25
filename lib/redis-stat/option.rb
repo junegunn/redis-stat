@@ -3,8 +3,7 @@ require 'optparse'
 class RedisStat
 module Option
   DEFAULT = {
-    :host     => '127.0.0.1',
-    :port     => 6379,
+    :hosts    => ['127.0.0.1:6379'],
     :interval => 2,
     :count    => nil,
     :csv      => nil
@@ -15,7 +14,7 @@ module Option
 
     options = DEFAULT.dup
     opts = ::OptionParser.new { |opts|
-      opts.banner = "usage: redis-stat [HOST[:PORT]] [INTERVAL [COUNT]]"
+      opts.banner = "usage: redis-stat [HOST[:PORT] ...] [INTERVAL [COUNT]]"
       opts.separator ''
 
       opts.on('--csv=OUTPUT_CSV_FILE_PATH', 'Save the result in CSV format') do |v|
@@ -41,33 +40,13 @@ module Option
       opts.parse! argv
 
       is_number   = lambda { |str| str =~ /^([0-9]\.?[0-9]*)$|^([1-9][0-9]*)$/ }
-      set_options = lambda { |host_port, interval, count|
-        if host_port
-          host, port = host_port.split(':')
-          options[:host] = host
-          options[:port] = port.to_i if port
-        end
 
-        options[:interval] = interval.to_f if interval
-        options[:count] = count.to_i if count
-      }
+      numbers, hosts = argv.partition { |e| is_number.call e }
+      interval, count = numbers.map(&:to_f)
 
-      case argv.length
-      when 1
-        if is_number.call argv.first
-          set_options.call nil, argv.first, nil
-        else
-          set_options.call argv.first, nil, nil
-        end
-      when 2
-        if is_number.call argv.first
-          set_options.call nil, argv.first, argv.last
-        else
-          set_options.call argv.first, argv.last, nil
-        end
-      when 3
-        set_options.call *argv
-      end
+      options[:interval] = interval if interval
+      options[:count]    = count if count
+      options[:hosts]    = hosts unless hosts.empty?
 
       validate options
 
@@ -92,9 +71,19 @@ module Option
       raise ArgumentError.new("Invalid count: #{count}")
     end
 
-    port = options[:port]
-    unless port.is_a?(Fixnum) && port > 0 && port < 65536
-      raise ArgumentError.new("Invalid port: #{port}")
+    hosts = options[:hosts]
+    if hosts.empty?
+      raise ArgumentError.new("Redis host not given")
+    end
+
+    hosts.each do |host|
+      host, port = host.split(':')
+      if port
+        port = port.to_i
+        unless port > 0 && port < 65536
+          raise ArgumentError.new("Invalid port: #{port}")
+        end
+      end
     end
   end
 end
