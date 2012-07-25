@@ -200,7 +200,7 @@ private
     dur = prev_info && (info[:at] - prev_info[:at])
 
     get_diff = lambda do |label|
-      if dur
+      if dur && dur > 0
         (info[label].to_f - prev_info[label].to_f) / dur
       else
         nil
