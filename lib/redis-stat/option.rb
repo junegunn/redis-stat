@@ -17,6 +17,10 @@ module Option
       opts.banner = "usage: redis-stat [HOST[:PORT] ...] [INTERVAL [COUNT]]"
       opts.separator ''
 
+      opts.on('--auth=PASSWORD', 'Password') do |v|
+        options[:auth] = v
+      end
+
       opts.on('--csv=OUTPUT_CSV_FILE_PATH', 'Save the result in CSV format') do |v|
         options[:csv] = v
       end

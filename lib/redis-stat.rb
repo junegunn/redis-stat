@@ -12,28 +12,37 @@ class RedisStat
   DEFAULT_TERM_HEIGHT = 25
 
   def initialize options = {}
-    @options   = RedisStat::Option::DEFAULT.merge options
-    @hosts     = @options[:hosts]
+    options    = RedisStat::Option::DEFAULT.merge options
+    @hosts     = options[:hosts]
     @redises   = @hosts.map { |e| 
       host, port = e.split(':')
       Redis.new(Hash[ {:host => host, :port => port}.select { |k, v| v } ])
     }
-    @max_count = @options[:count]
+    @interval  = options[:interval]
+    @max_count = options[:count]
+    @colors    = options[:colors] || COLORS
+    @csv       = options[:csv]
+    @auth      = options[:auth]
+    @measures  = MEASURES[ options[:verbose] ? :verbose : :default ]
     @count     = 0
-    @colors    = @options[:colors] || COLORS
   end
 
   def start output_stream
     @os = output_stream
     trap('INT') { Thread.main.raise Interrupt }
 
-    csv = File.open(@options[:csv], 'w') if @options[:csv]
-    update_term_size!
-
-
     begin
-      # Warm-up
-      @redises.each { |r| r.info }
+      csv = File.open(@csv, 'w') if @csv
+      update_term_size!
+
+      # Warm-up / authenticate only when needed
+      @redises.each do |r|
+        begin
+          r.info
+        rescue Redis::CommandError
+          r.auth @auth if @auth
+        end
+      end
 
       @started_at = Time.now
       prev_info = nil
@@ -60,7 +69,7 @@ class RedisStat
         prev_info = info
         @count += 1
         break if @max_count && @count >= @max_count
-        sleep @options[:interval]
+        sleep @interval
       end
       @os.puts
     rescue Interrupt
@@ -213,7 +222,7 @@ private
   end
 
   def process info, prev_info
-    MEASURES[@options[:verbose] ? :verbose : :default].map { |key|
+    @measures.map { |key|
       [ key, process_how(info, prev_info, key) ]
     }.select { |pair| pair.last }
   end
