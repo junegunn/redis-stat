@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 require "redis-stat/version"
 require "redis-stat/option"
 require 'insensitive_hash'
@@ -181,9 +183,7 @@ private
   def output_static_info info
     tab = Tabularize.new(
       :unicode => false, :align => :right,
-      :hborder => ansi(:black, :bold) { '-' },
-      :vborder => ansi(:black, :bold) { '|' },
-      :iborder => ansi(:black, :bold) { '+' }
+      :border_style => :unicode,
     )
     tab << [nil] + @hosts.map { |h| ansi(:bold, :green) { h } }
     tab.separator!
@@ -205,13 +205,12 @@ private
 
   def init_table info_output
     @table = Tabularize.new :unicode => false,
-                       :align => :right,
-                       :hborder => ansi(:black, :bold) { '-' },
-                       :iborder => ansi(:black, :bold) { '+' },
-                       :vborder => ' ',
-                       :ellipsis => ansi(:bold) { '>' },
-                       :pad_left => 0,
-                       :pad_right => 0,
+                       :align        => :right,
+                       :border_style => :unicode,
+                       :border_color => ANSI::Code.red,
+                       :vborder      => ' ',
+                       :pad_left     => 0,
+                       :pad_right    => 0,
                        :screen_width => @term_width
     @table << info_output.map { |pair|
       ansi(*((@colors[pair.first] || []) + [:underline])) {
