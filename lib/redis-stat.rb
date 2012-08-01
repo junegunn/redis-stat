@@ -186,7 +186,7 @@ private
   def output_static_info info
     tab = Tabularize.new(
       :unicode => false, :align => :right,
-      :border_style => :unicode,
+      :border_style => :unicode
     )
     tab << [nil] + @hosts.map { |h| ansi(:bold, :green) { h } }
     tab.separator!
