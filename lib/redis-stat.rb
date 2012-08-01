@@ -27,6 +27,7 @@ class RedisStat
     @auth        = options[:auth]
     @measures    = MEASURES[ options[:verbose] ? :verbose : :default ]
     @count       = 0
+    @style       = options[:style]
     @first_batch = true
   end
 
@@ -186,7 +187,7 @@ private
   def output_static_info info
     tab = Tabularize.new(
       :unicode => false, :align => :right,
-      :border_style => :unicode
+      :border_style => @style
     )
     tab << [nil] + @hosts.map { |h| ansi(:bold, :green) { h } }
     tab.separator!
@@ -209,7 +210,7 @@ private
   def init_table info_output
     table = Tabularize.new :unicode => false,
                        :align        => :right,
-                       :border_style => :unicode,
+                       :border_style => @style,
                        :border_color => ANSI::Code.red,
                        :vborder      => ' ',
                        :pad_left     => 0,

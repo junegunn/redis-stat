@@ -16,6 +16,7 @@ usage: redis-stat [HOST[:PORT] ...] [INTERVAL [COUNT]]
         --auth=PASSWORD              Password
         --csv=OUTPUT_CSV_FILE_PATH   Save the result in CSV format
     -v, --verbose                    Show more info
+        --style=STYLE                Output style: unicode|ascii
         --version                    Show version
         --help                       Show this message
 ```
@@ -38,7 +39,7 @@ redis-stat localhost localhost:6380 1 10 --csv=/tmp/output.csv --verbose
 
 ## Screenshot
 
-![](https://github.com/junegunn/redis-stat/raw/master/screenshots/redis-stat-0.1.0.png)
+![](https://github.com/junegunn/redis-stat/raw/master/screenshots/redis-stat-0.2.4.png)
 
 
 ## Contributing

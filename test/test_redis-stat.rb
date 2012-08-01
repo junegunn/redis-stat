@@ -48,7 +48,8 @@ class TestRedisStat < Test::Unit::TestCase
       :hosts => ['localhost:1000'],
       :interval => 20,
       :count => nil,
-      :csv => nil
+      :csv => nil,
+      :style => :unicode
     }.sort, options.sort)
 
     options = RedisStat::Option.parse(%w[localhost:1000 20 30])
@@ -56,7 +57,8 @@ class TestRedisStat < Test::Unit::TestCase
       :hosts => ['localhost:1000'],
       :interval => 20,
       :count => 30,
-      :csv => nil
+      :csv => nil,
+      :style => :unicode
     }.sort, options.sort)
 
     options = RedisStat::Option.parse(%w[20])
@@ -64,7 +66,8 @@ class TestRedisStat < Test::Unit::TestCase
       :hosts => ['127.0.0.1:6379'],
       :interval => 20,
       :count => nil,
-      :csv => nil
+      :csv => nil,
+      :style => :unicode
     }.sort, options.sort)
 
     options = RedisStat::Option.parse(%w[20 30])
@@ -72,15 +75,17 @@ class TestRedisStat < Test::Unit::TestCase
       :hosts => ['127.0.0.1:6379'],
       :interval => 20,
       :count => 30,
-      :csv => nil
+      :csv => nil,
+      :style => :unicode
     }.sort, options.sort)
 
-    options = RedisStat::Option.parse(%w[localhost:8888 10 --csv=/tmp/a.csv])
+    options = RedisStat::Option.parse(%w[localhost:8888 10 --csv=/tmp/a.csv --style=ascii])
     assert_equal({
       :hosts => ['localhost:8888'],
       :interval => 10,
       :count => nil,
       :csv => '/tmp/a.csv',
+      :style => :ascii
     }.sort, options.sort)
   end
 
@@ -93,12 +98,16 @@ class TestRedisStat < Test::Unit::TestCase
         options = RedisStat::Option.parse(argv)
       }
     end
+
+    assert_raise(SystemExit) {
+      RedisStat::Option.parse(%w[--style=html])
+    }
   end
 
   def test_start
     csv = '/tmp/redis-stat.csv'
     cnt = 100
-    rs = RedisStat.new :hosts => %w[localhost] * 5, :interval => 0.05, :count => cnt,
+    rs = RedisStat.new :hosts => %w[localhost] * 5, :interval => 0.02, :count => cnt,
             :verbose => true, :csv => csv, :auth => 'pw'
     rs.start $stdout
 
