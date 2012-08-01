@@ -14,19 +14,20 @@ class RedisStat
   DEFAULT_TERM_HEIGHT = 25
 
   def initialize options = {}
-    options    = RedisStat::Option::DEFAULT.merge options
-    @hosts     = options[:hosts]
-    @redises   = @hosts.map { |e| 
+    options      = RedisStat::Option::DEFAULT.merge options
+    @hosts       = options[:hosts]
+    @redises     = @hosts.map { |e| 
       host, port = e.split(':')
       Redis.new(Hash[ {:host => host, :port => port}.select { |k, v| v } ])
     }
-    @interval  = options[:interval]
-    @max_count = options[:count]
-    @colors    = options[:colors] || COLORS
-    @csv       = options[:csv]
-    @auth      = options[:auth]
-    @measures  = MEASURES[ options[:verbose] ? :verbose : :default ]
-    @count     = 0
+    @interval    = options[:interval]
+    @max_count   = options[:count]
+    @colors      = options[:colors] || COLORS
+    @csv         = options[:csv]
+    @auth        = options[:auth]
+    @measures    = MEASURES[ options[:verbose] ? :verbose : :default ]
+    @count       = 0
+    @first_batch = true
   end
 
   def start output_stream
@@ -128,7 +129,7 @@ private
   def output info, prev_info, file
     info_output = process info, prev_info
 
-    init_table info_output unless @table
+    @table ||= init_table info_output
 
     movement = nil
     if @count == 0
@@ -141,9 +142,10 @@ private
         })
       end
     elsif @count % @term_height == 0
+      @first_batch = false
       movement = -1
       update_term_size!
-      init_table info_output
+      @table = init_table info_output
     end
 
     # Build output table
@@ -151,6 +153,7 @@ private
       ansi(*@colors[pair.first]) { [*pair.last].first }
     }
     lines  = @table.to_s.lines.map(&:chomp)
+    lines.delete_at @first_batch ? 1 : 0
     width  = lines.first.length
     height = lines.length
 
@@ -204,7 +207,7 @@ private
   end
 
   def init_table info_output
-    @table = Tabularize.new :unicode => false,
+    table = Tabularize.new :unicode => false,
                        :align        => :right,
                        :border_style => :unicode,
                        :border_color => ANSI::Code.red,
@@ -212,12 +215,14 @@ private
                        :pad_left     => 0,
                        :pad_right    => 0,
                        :screen_width => @term_width
-    @table << info_output.map { |pair|
+    table.separator!
+    table << info_output.map { |pair|
       ansi(*((@colors[pair.first] || []) + [:underline])) {
         LABELS[pair.first] || pair.first
       } 
     }
-    @table.separator!
+    table.separator!
+    table
   end
 
   def process info, prev_info

@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 require 'rubygems'
 require 'test/unit'
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
@@ -95,8 +97,8 @@ class TestRedisStat < Test::Unit::TestCase
 
   def test_start
     csv = '/tmp/redis-stat.csv'
-    cnt = 50
-    rs = RedisStat.new :hosts => %w[localhost] * 5, :interval => 0.1, :count => cnt,
+    cnt = 100
+    rs = RedisStat.new :hosts => %w[localhost] * 5, :interval => 0.05, :count => cnt,
             :verbose => true, :csv => csv, :auth => 'pw'
     rs.start $stdout
 
