@@ -202,7 +202,7 @@ private
       :aof_enabled,
       :vm_enabled
     ].each do |key|
-      tab << [ansi(:bold) { key }] + info[key]
+      tab << [ansi(:bold) { key }] + info[key] if info[key]
     end
     @os.puts tab
   end
