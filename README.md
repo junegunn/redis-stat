@@ -41,6 +41,10 @@ redis-stat localhost localhost:6380 1 10 --csv=/tmp/output.csv --verbose
 
 ![](https://github.com/junegunn/redis-stat/raw/master/screenshots/redis-stat-0.2.4.png)
 
+## Contributors
+
+- [Junegunn Choi](https://github.com/junegunn)
+- [Chris Meisl](https://github.com/cmeisl)
 
 ## Contributing
 
