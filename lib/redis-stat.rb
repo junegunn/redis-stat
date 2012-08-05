@@ -49,6 +49,7 @@ class RedisStat
       end
 
       @started_at = Time.now
+      all_measures = MEASURES.values.inject(:+).uniq - [:at]
       prev_info = nil
       loop do
         info = {}.insensitive
@@ -62,9 +63,9 @@ class RedisStat
         @redises.pmap(@redises.length) { |redis|
           redis.info.insensitive
         }.each do |rinfo|
-          rinfo.each do |k, v|
+          all_measures.each do |k|
             info[k] ||= []
-            info[k] << v
+            info[k] << rinfo[k]
           end
         end
 
@@ -191,18 +192,8 @@ private
     )
     tab << [nil] + @hosts.map { |h| ansi(:bold, :green) { h } }
     tab.separator!
-    [
-      :redis_version,
-      :process_id,
-      :uptime_in_seconds,
-      :uptime_in_days,
-      :gcc_version,
-      :role,
-      :connected_slaves,
-      :aof_enabled,
-      :vm_enabled
-    ].each do |key|
-      tab << [ansi(:bold) { key }] + info[key] if info[key]
+    MEASURES[:static].each do |key|
+      tab << [ansi(:bold) { key }] + info[key] unless info[key].compact.empty?
     end
     @os.puts tab
   end
@@ -303,6 +294,17 @@ private
   end
 
   MEASURES = {
+    :static => [
+      :redis_version,
+      :process_id,
+      :uptime_in_seconds,
+      :uptime_in_days,
+      :gcc_version,
+      :role,
+      :connected_slaves,
+      :aof_enabled,
+      :vm_enabled
+    ],
     :default => [
       :at,
       :used_cpu_user,
