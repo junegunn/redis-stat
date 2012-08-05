@@ -1,9 +1,12 @@
 #!/usr/bin/env ruby
+# encoding: utf-8
 
 require 'rubygems'
-require 'test/unit'
+require 'test-unit'
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'redis-stat'
+require 'redis'
+require 'stringio'
 
 class TestRedisStat < Test::Unit::TestCase
   def test_humanize_number
@@ -115,6 +118,25 @@ class TestRedisStat < Test::Unit::TestCase
   ensure
     File.unlink csv
   end
-end
 
+  def test_static_info_of_mixed_versions
+    # prerequisite
+    r1 = Redis.new(:host => 'localhost')
+    r2 = Redis.new(:host => 'localhost', :port => 6380)
+
+    if r1.info['redis_version'] =~ /^2\.4/ && r2.info['redis_version'] =~ /^2\.2/
+      rs = RedisStat.new :hosts => %w[localhost:6380 localhost], :interval => 1, :count => 1,
+            :auth => 'pw', :style => :ascii
+      output = StringIO.new
+      rs.start output
+      vline = output.string.lines.select { |line| line =~ /gcc_version/ }.first
+      puts vline.gsub(/ +/, ' ')
+      assert vline.gsub(/ +/, ' ').include?('| | 4.2.1 |')
+    else
+      raise NotImplementedError.new # FIXME
+    end
+  rescue Redis::CannotConnectError, NotImplementedError 
+    pend "redises not ready"
+  end
+end
 
