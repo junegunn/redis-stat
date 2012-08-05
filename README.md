@@ -17,6 +17,7 @@ usage: redis-stat [HOST[:PORT] ...] [INTERVAL [COUNT]]
         --csv=OUTPUT_CSV_FILE_PATH   Save the result in CSV format
     -v, --verbose                    Show more info
         --style=STYLE                Output style: unicode|ascii
+        --no-color                   Suppress ANSI color codes
         --version                    Show version
         --help                       Show this message
 ```

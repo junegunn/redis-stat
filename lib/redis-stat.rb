@@ -22,6 +22,7 @@ class RedisStat
     }
     @interval    = options[:interval]
     @max_count   = options[:count]
+    @mono        = options[:mono]
     @colors      = options[:colors] || COLORS
     @csv         = options[:csv]
     @auth        = options[:auth]
@@ -202,7 +203,7 @@ private
     table = Tabularize.new :unicode => false,
                        :align        => :right,
                        :border_style => @style,
-                       :border_color => ANSI::Code.red,
+                       :border_color => @mono ? nil : ANSI::Code.red,
                        :vborder      => ' ',
                        :pad_left     => 0,
                        :pad_right    => 0,
@@ -286,7 +287,7 @@ private
   end
 
   def ansi *args, &block
-    if args.empty?
+    if @mono || args.empty?
       block.call
     else
       ANSI::Code.ansi *args, &block

@@ -90,6 +90,9 @@ class TestRedisStat < Test::Unit::TestCase
       :csv => '/tmp/a.csv',
       :style => :ascii
     }.sort, options.sort)
+
+    options = RedisStat::Option.parse(%w[--no-color])
+    assert_equal true, options[:mono]
   end
 
   def test_option_parse_invalid
@@ -110,13 +113,24 @@ class TestRedisStat < Test::Unit::TestCase
   def test_start
     csv = '/tmp/redis-stat.csv'
     cnt = 100
-    rs = RedisStat.new :hosts => %w[localhost] * 5, :interval => 0.02, :count => cnt,
-            :verbose => true, :csv => csv, :auth => 'pw'
+    rs = RedisStat.new :hosts => %w[localhost] * 5, :interval => 0.01, :count => cnt,
+            :verbose => true, :csv => csv, :auth => 'pw
     rs.start $stdout
 
     assert_equal cnt + 1, File.read(csv).lines.to_a.length
   ensure
     File.unlink csv
+  end
+
+  def test_mono
+    [true, false].each do |mono|
+      rs = RedisStat.new :hosts => %w[localhost] * 5, :interval => 0.02, :count => 20,
+                         :verbose => true, :auth => 'pw', :mono => mono
+      output = StringIO.new
+      rs.start output
+      puts output.string
+      assert_equal mono, output.string !~ /\e\[\d*(;\d+)*m/
+    end
   end
 
   def test_static_info_of_mixed_versions

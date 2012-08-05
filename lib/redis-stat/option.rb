@@ -34,6 +34,10 @@ module Option
         options[:style] = v.downcase.to_sym
       end
 
+      opts.on('--no-color', 'Suppress ANSI color codes') do |v|
+        options[:mono] = true
+      end
+
       opts.on('--version', 'Show version') do
         puts RedisStat::VERSION
         exit 0
