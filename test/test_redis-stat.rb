@@ -114,7 +114,7 @@ class TestRedisStat < Test::Unit::TestCase
     csv = '/tmp/redis-stat.csv'
     cnt = 100
     rs = RedisStat.new :hosts => %w[localhost] * 5, :interval => 0.01, :count => cnt,
-            :verbose => true, :csv => csv, :auth => 'pw
+            :verbose => true, :csv => csv, :auth => 'pw'
     rs.start $stdout
 
     assert_equal cnt + 1, File.read(csv).lines.to_a.length
