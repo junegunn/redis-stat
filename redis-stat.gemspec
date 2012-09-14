@@ -20,6 +20,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency "tabularize", '~> 0.2.8'
   gem.add_runtime_dependency "insensitive_hash", '~> 0.3.0'
   gem.add_runtime_dependency "parallelize", '~> 0.4.0'
+  gem.add_runtime_dependency "si", '~> 0.1.3'
 
   gem.add_development_dependency 'test-unit'
 end

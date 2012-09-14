@@ -8,6 +8,7 @@ require 'tabularize'
 require 'ansi'
 require 'csv'
 require 'parallelize'
+require 'si'
 
 class RedisStat
   DEFAULT_TERM_WIDTH  = 180
@@ -64,7 +65,7 @@ class RedisStat
         @redises.pmap(@redises.length) { |redis|
           redis.info.insensitive
         }.each do |rinfo|
-          all_measures.each do |k|
+          (all_measures + rinfo.keys.select { |k| k =~ /^db[0-9]+$/ }).each do |k|
             info[k] ||= []
             info[k] << rinfo[k]
           end
@@ -255,35 +256,21 @@ private
       [humanize_number(val.to_i), val]
     when :used_memory, :used_memory_rss, :aof_current_size, :aof_base_size
       val = info.sumf(key)
-      [humanize_number(val.to_i, 1024, 'B'), val]
+      [humanize_number(val.to_i, true), val]
     else
-      format_number info.sumf(key)
+      humanize_number info.sumf(key)
     end
   end
 
-  def format_number num
-    if num.to_i == num
-      num.to_i
-    elsif num < 10
-      "%.2f" % num
-    elsif num < 100
-      "%.1f" % num
-    else
-      num.to_i
-    end.to_s
-  end
-
-  def humanize_number num, k = 1000, suffix = ''
+  def humanize_number num, byte = false
     return '-' if num.nil?
 
-    sign = num >= 0 ? '' : '-'
-    num  = num.abs
-    mult = k.to_f
-    ['', 'K', 'M', 'G', 'T', 'P', 'E'].each do |mp|
-      return sign + format_number(num * k / mult) + mp + suffix if num < mult || mp == 'E'
-      mult *= k
+    num = num.to_i if num == num.to_i
+    if byte
+      num.si_byte
+    else
+      num.si(:min_exp => 0)
     end
-    return nil
   end
 
   def ansi *args, &block

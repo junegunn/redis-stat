@@ -18,9 +18,9 @@ class TestRedisStat < Test::Unit::TestCase
     assert_equal '0.75', rs.send(:humanize_number, 0.751)
     assert_equal '7.51', rs.send(:humanize_number,  7.51)
     assert_equal '75.1', rs.send(:humanize_number,  75.1)
-    assert_equal '7.51K', rs.send(:humanize_number, 7510)
-    assert_equal '75.1K', rs.send(:humanize_number, 75100)
-    assert_equal '751K', rs.send(:humanize_number,  751000)
+    assert_equal '7.51k', rs.send(:humanize_number, 7510)
+    assert_equal '75.1k', rs.send(:humanize_number, 75100)
+    assert_equal '751k', rs.send(:humanize_number,  751000)
     assert_equal '7.51M', rs.send(:humanize_number, 7510000)
     assert_equal '75.1M', rs.send(:humanize_number, 75100000)
     assert_equal '751M', rs.send(:humanize_number,  751000000)
@@ -36,10 +36,10 @@ class TestRedisStat < Test::Unit::TestCase
     assert_equal '7.51E', rs.send(:humanize_number, 7510000000000000000)
     assert_equal '75.1E', rs.send(:humanize_number, 75100000000000000000)
     assert_equal '751E',  rs.send(:humanize_number, 751000000000000000000)
-    assert_equal '7510E', rs.send(:humanize_number, 7510000000000000000000)
+    assert_equal '7.51Z', rs.send(:humanize_number, 7510000000000000000000)
 
-    assert_equal '7.51PB', rs.send(:humanize_number, 7.51 * (1024 ** 5), 1024, 'B')
-    assert_equal '-7.51PB', rs.send(:humanize_number, -7.51 * (1024 ** 5), 1024, 'B')
+    assert_equal '7.51PB', rs.send(:humanize_number, 7.51 * (1024 ** 5), true)
+    assert_equal '-7.51PB', rs.send(:humanize_number, -7.51 * (1024 ** 5), true)
   end
 
   def test_option_parse
