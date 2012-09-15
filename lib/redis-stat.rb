@@ -1,7 +1,8 @@
 # encoding: utf-8
 
-require "redis-stat/version"
-require "redis-stat/option"
+require 'redis-stat/version'
+require 'redis-stat/constants'
+require 'redis-stat/option'
 require 'insensitive_hash'
 require 'redis'
 require 'tabularize'
@@ -11,9 +12,6 @@ require 'parallelize'
 require 'si'
 
 class RedisStat
-  DEFAULT_TERM_WIDTH  = 180
-  DEFAULT_TERM_HEIGHT = 25
-
   def initialize options = {}
     options      = RedisStat::Option::DEFAULT.merge options
     @hosts       = options[:hosts]
@@ -28,6 +26,7 @@ class RedisStat
     @csv         = options[:csv]
     @auth        = options[:auth]
     @measures    = MEASURES[ options[:verbose] ? :verbose : :default ]
+    @all_measures= MEASURES.values.inject(:+).uniq - [:at]
     @count       = 0
     @style       = options[:style]
     @first_batch = true
@@ -51,26 +50,9 @@ class RedisStat
       end
 
       @started_at = Time.now
-      all_measures = MEASURES.values.inject(:+).uniq - [:at]
       prev_info = nil
       loop do
-        info = {}.insensitive
-        class << info
-          def sumf label
-            (self[label] || []).map(&:to_f).inject(:+)
-          end
-        end
-
-        info[:at] = Time.now.to_f
-        @redises.pmap(@redises.length) { |redis|
-          redis.info.insensitive
-        }.each do |rinfo|
-          (all_measures + rinfo.keys.select { |k| k =~ /^db[0-9]+$/ }).each do |k|
-            info[k] ||= []
-            info[k] << rinfo[k]
-          end
-        end
-
+        info = collect
         output info, prev_info, csv
 
         prev_info = info
@@ -94,6 +76,26 @@ class RedisStat
   end
 
 private
+  def collect
+    {}.insensitive.tap do |info|
+      class << info
+        def sumf label
+          (self[label] || []).map(&:to_f).inject(:+)
+        end
+      end
+
+      info[:at] = Time.now.to_f
+      @redises.pmap(@redises.length) { |redis|
+        redis.info.insensitive
+      }.each do |rinfo|
+        (@all_measures + rinfo.keys.select { |k| k =~ /^db[0-9]+$/ }).each do |k|
+          info[k] ||= []
+          info[k] << rinfo[k]
+        end
+      end
+    end
+  end
+
   def update_term_size!
     if RUBY_PLATFORM.match(/java/)
       require 'java'
@@ -280,111 +282,4 @@ private
       ANSI::Code.ansi *args, &block
     end
   end
-
-  MEASURES = {
-    :static => [
-      :redis_version,
-      :process_id,
-      :uptime_in_seconds,
-      :uptime_in_days,
-      :gcc_version,
-      :role,
-      :connected_slaves,
-      :aof_enabled,
-      :vm_enabled
-    ],
-    :default => [
-      :at,
-      :used_cpu_user,
-      :used_cpu_sys,
-      :connected_clients,
-      :blocked_clients,
-      :used_memory,
-      :used_memory_rss,
-      :keys,
-      :total_commands_processed_per_second,
-      :expired_keys_per_second,
-      :evicted_keys_per_second,
-      :keyspace_hits_per_second,
-      :keyspace_misses_per_second,
-      :aof_current_size,
-      :pubsub_channels,
-    ],
-    :verbose => [
-      :at,
-      :used_cpu_user,
-      :used_cpu_sys,
-      :connected_clients,
-      :blocked_clients,
-      :used_memory,
-      :used_memory_rss,
-      :mem_fragmentation_ratio,
-      :keys,
-      :total_commands_processed_per_second,
-      :total_commands_processed,
-      :expired_keys_per_second,
-      :expired_keys,
-      :evicted_keys_per_second,
-      :evicted_keys,
-      :keyspace_hits_per_second,
-      :keyspace_hits,
-      :keyspace_misses_per_second,
-      :keyspace_misses,
-      :aof_current_size,
-      :aof_base_size,
-      :pubsub_channels,
-      :pubsub_patterns,
-    ]
-  }
-
-  COLORS = {
-    :at                                  => [:bold],
-    :used_cpu_user                       => [:yellow, :bold],
-    :used_cpu_sys                        => [:yellow],
-    :connected_clients                   => [:cyan, :bold],
-    :blocked_clients                     => [:cyan, :bold],
-    :used_memory                         => [:green],
-    :used_memory_rss                     => [:green],
-    :mem_fragmentation_ratio             => [:green],
-    :keys                                => [:bold],
-    :total_commands_processed            => [:blue, :bold],
-    :total_commands_processed_per_second => [:blue, :bold],
-    :expired_keys                        => [:red],
-    :expired_keys_per_second             => [:red],
-    :evicted_keys                        => [:red, :bold],
-    :evicted_keys_per_second             => [:red, :bold],
-    :keyspace_hits                       => [:magenta, :bold],
-    :keyspace_hits_per_second            => [:magenta, :bold],
-    :keyspace_misses                     => [:magenta],
-    :keyspace_misses_per_second          => [:magenta],
-    :aof_current_size                    => [:cyan],
-    :aof_base_size                       => [:cyan],
-    :pubsub_channels                     => [:cyan, :bold],
-    :pubsub_patterns                     => [:cyan, :bold],
-  }
-
-  LABELS = {
-    :at                                  => 'time',
-    :used_cpu_user                       => 'us',
-    :used_cpu_sys                        => 'sy',
-    :connected_clients                   => 'cl',
-    :blocked_clients                     => 'bcl',
-    :used_memory                         => 'mem',
-    :used_memory_rss                     => 'rss',
-    :mem_fragmentation_ratio             => 'frag',
-    :total_commands_processed            => 'cmd',
-    :total_commands_processed_per_second => 'cmd/s',
-    :expired_keys                        => 'exp',
-    :expired_keys_per_second             => 'exp/s',
-    :evicted_keys                        => 'evt',
-    :evicted_keys_per_second             => 'evt/s',
-    :keyspace_hits                       => 'hit',
-    :keyspace_hits_per_second            => 'hit/s',
-    :keyspace_misses                     => 'mis',
-    :keyspace_misses_per_second          => 'mis/s',
-    :aof_current_size                    => 'aofcs',
-    :aof_base_size                       => 'aofbs',
-    :pubsub_channels                     => 'psch',
-    :pubsub_patterns                     => 'psp',
-  }
 end
