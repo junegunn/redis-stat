@@ -2,6 +2,9 @@
 
 A command-line Redis monitoring tool written in Ruby.
 
+(It is highly likely that you are looking for the original [redis-stat](https://github.com/antirez/redis-tools/blob/master/redis-stat.c)
+included in [redis-tools](https://github.com/antirez/redis-tools) written by the creator of Redis himself.)
+
 ## Installation
 
 ```
