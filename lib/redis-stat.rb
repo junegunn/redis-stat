@@ -243,6 +243,7 @@ private
       Time.now.strftime('%H:%M:%S')
     when :used_cpu_user, :used_cpu_sys
       val = get_diff.call(key)
+      val &&= (val * 100).round
       [humanize_number(val), val]
     when :keys
       val = Hash[ info.select { |k, v| k =~ /^db[0-9]+$/ } ].values.inject(0) { |sum, vs| 
