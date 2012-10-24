@@ -5,4 +5,8 @@ require 'redis-stat'
 
 options = RedisStat::Option.parse ARGV
 rs = RedisStat.new options
-rs.start $stdout
+begin
+  rs.start $stdout
+rescue Exception
+  raise if options[:verbose]
+end

@@ -66,7 +66,7 @@ class RedisStat
       @os.puts ansi(:yellow, :bold) { "Interrupted." }
     rescue Exception => e
       @os.puts ansi(:red, :bold) { e.to_s }
-      exit 1
+      raise
     ensure
       csv.close if csv
     end
@@ -254,14 +254,12 @@ private
          :keyspace_misses_per_second, :total_commands_processed_per_second
       val = get_diff.call(key.to_s.gsub(/_per_second$/, '').to_sym)
       [humanize_number(val), val]
-    when :total_commands_processed, :evicted_keys, :expired_keys, :keyspace_hits, :keyspace_misses
-      val = info.sumf(key)
-      [humanize_number(val.to_i), val]
     when :used_memory, :used_memory_rss, :aof_current_size, :aof_base_size
       val = info.sumf(key)
       [humanize_number(val.to_i, true), val]
     else
-      humanize_number info.sumf(key)
+      val = info.sumf(key)
+      [humanize_number(val), val]
     end
   end
 

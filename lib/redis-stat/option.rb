@@ -11,14 +11,14 @@ module Option
   }
 
   def self.parse argv
-    argv = argv.dup
+    argv = argv.reject { |e| e == '-h' }
 
     options = DEFAULT.dup
     opts = ::OptionParser.new { |opts|
       opts.banner = "usage: redis-stat [HOST[:PORT] ...] [INTERVAL [COUNT]]"
       opts.separator ''
 
-      opts.on('--auth=PASSWORD', 'Password') do |v|
+      opts.on('-a', '--auth=PASSWORD', 'Password') do |v|
         options[:auth] = v
       end
 

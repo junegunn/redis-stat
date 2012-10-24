@@ -82,8 +82,19 @@ class TestRedisStat < Test::Unit::TestCase
       :style => :unicode
     }.sort, options.sort)
 
-    options = RedisStat::Option.parse(%w[localhost:8888 10 --csv=/tmp/a.csv --style=ascii])
+    options = RedisStat::Option.parse(%w[localhost:8888 10 --csv=/tmp/a.csv --style=ascii --auth password])
     assert_equal({
+      :auth => 'password',
+      :hosts => ['localhost:8888'],
+      :interval => 10,
+      :count => nil,
+      :csv => '/tmp/a.csv',
+      :style => :ascii
+    }.sort, options.sort)
+
+    options = RedisStat::Option.parse(%w[-h localhost:8888 10 -a password --csv=/tmp/a.csv --style=ascii])
+    assert_equal({
+      :auth => 'password',
       :hosts => ['localhost:8888'],
       :interval => 10,
       :count => nil,
