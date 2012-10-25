@@ -1,0 +1,66 @@
+body {
+  padding-top: 40px;
+}
+
+/* http://www.w3schools.com/cssref/css_colornames.asp */
+.blue         { color: steelblue;      }
+.green        { color: mediumseagreen; }
+.red          { color: orangered;      }
+.yellow       { color: darkorange;     }
+.cyan         { color: darkcyan;       }
+.magenta      { color: darkorchid;     }
+.bold.blue    { color: dodgerblue;     }
+.bold.green   { color: yellowgreen;    }
+.bold.red     { color: crimson;        }
+.bold.yellow  { color: orange;         }
+.bold.cyan    { color: darkcyan;       }
+.bold.magenta { color: mediumorchid;   }
+
+.modal {
+  /* TODO: modal placement */
+}
+
+.navbar .brand {
+  font-weight: bold;
+}
+
+.chart {
+  height: 200px;
+  margin-bottom: 20px;
+}
+
+#stat_table td, #stat_table th {
+  text-align: right;
+}
+
+#stat_table tbody {
+}
+
+#info_table th {
+  font-style: italic;
+}
+
+.footer {
+  padding: 30px 0;
+  margin-top: 30px;
+  border-top: 1px solid #e5e5e5;
+  background-color: #f5f5f5;
+}
+
+.footer p {
+  margin-bottom: 0;
+  padding: 5px;
+  color: #777;
+}
+
+.footer-links {
+  margin: 10px 0;
+}
+
+.footer-links li {
+  display: inline;
+  margin-right: 10px;
+}
+
+
+/* jqplot */

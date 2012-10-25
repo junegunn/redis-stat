@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>redis-stat</title>
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="/jqplot/jquery.jqplot.min.css" rel="stylesheet"/>
+    <link href="/css/site.css" rel="stylesheet"/>
+    <script type="text/javascript" src="/jquery-1.8.2.min.js"></script>
+    <script type="text/javascript" src="/jqplot/jquery.jqplot.min.js"></script>
+    <script type="text/javascript" src="/jqplot/jqplot.canvasTextRenderer.min.js"></script>
+    <script type="text/javascript" src="/jqplot/jqplot.canvasAxisLabelRenderer.min.js"></script>
+    <script type="text/javascript" src="/jqplot/jqplot.canvasAxisTickRenderer.min.js"></script>
+    <script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/site.js"></script>
+  </head>
+  <body>
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="/">redis-stat</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <div class="span12">
+          <h3>Dashboard</h3>
+        </div>
+      </div>
+
+      <div class="row">
+        <div id="chart1" class="span4 chart">
+        </div>
+        <div id="chart2" class="span4 chart">
+        </div>
+        <div id="chart3" class="span4 chart">
+        </div>
+      </div>
+      <div class="row">
+        <div class="span12">
+          <table id="stat_table" class="table table-striped table-bordered table-condensed">
+            <thead>
+              <tr>
+                <% @measures.each do |m| %>
+                  <th>
+                    <h5 class="text-info">
+                      <a href="#" rel="tooltip" title="<%= m %>">
+                        <%= RedisStat::LABELS[m] %>
+                      </a>
+                    </h5>
+                  </th>
+                <% end %>
+              </tr>
+            </thead>
+            <tbody id="info">
+              <% 10.times do %>
+                <tr><td colspan="<%= @measures.length %>">&nbsp;</td></tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="span12">
+          <h3>Instance information</h3>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="span<%= [12, 2 + @hosts.length * 2].min %>">
+          <table id="info_table" class="table table-striped table-bordered table-condensed table-hover">
+            <thead>
+              <tr>
+                <td></td>
+                <% @hosts.each do |host| %>
+                  <th class="text-info"><%= host %></th>
+                <% end %>
+              </tr>
+            </thead>
+            <tbody>
+              <% RedisStat::MEASURES[:static].each do |stat| %>
+              <tr id="<%= stat %>">
+                <th>
+                  <%= stat %>
+                </th>
+                <% @hosts.each_with_index do |host, idx| %>
+                <td>
+                  <%= @info[stat][idx] %>
+                </td>
+                <% end %>
+              </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <a href="https://github.com/junegunn/redis-stat">
+      <img style="position: fixed; top: 0; right: 0; border: 0; z-index: 10000" src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub"></a>
+
+    <div class="modal hide fade" id="fail" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-header">
+        <h3 id="myModalLabel">Oops!</h3>
+      </div>
+      <div class="modal-body">
+        <p>Lost connection to redis-stat.</p>
+        <p>Try reloading the page.</p>
+      </div>
+      <div class="modal-footer">
+        <a href="/" class="btn btn-primary">Reload</a>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="container">
+        <p>Designed and implemented by <a href="https://github.com/junegunn">Junegunn Choi</a>.</p>
+        <p>Powered by <a href="http://twitter.github.com/bootstrap/">Bootstrap</a>, <a href="http://jquery.com/">jQuery</a> and <a href="http://www.jqplot.com/">jqPlot</a>.</p>
+        
+      </div>
+    </footer>
+
+    <script>
+      $(function() {
+        initialize(
+          <%= @measures.to_json %>,
+          <%= Hash[@measures.map { |m| [m, RedisStat::COLORS[m].join(' ')] }].to_json %>)
+
+        $("#stat_table th a").tooltip()
+
+        var source = new EventSource("/pull")
+        source.onmessage = function(e) {
+          update(JSON.parse(e.data))
+        }
+        source.onerror = function(e) {
+          source.close()
+          $('#fail').modal({backdrop: 'static'})
+        }
+      })
+    </script>
+  </body>
+</html>

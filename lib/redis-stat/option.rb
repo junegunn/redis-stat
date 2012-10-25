@@ -22,10 +22,6 @@ module Option
         options[:auth] = v
       end
 
-      opts.on('--csv=OUTPUT_CSV_FILE_PATH', 'Save the result in CSV format') do |v|
-        options[:csv] = v
-      end
-
       opts.on('-v', '--verbose', 'Show more info') do |v|
         options[:verbose] = v
       end
@@ -37,6 +33,28 @@ module Option
       opts.on('--no-color', 'Suppress ANSI color codes') do |v|
         options[:mono] = true
       end
+
+      opts.on('--csv=OUTPUT_CSV_FILE_PATH', 'Save the result in CSV format') do |v|
+        options[:csv] = v
+      end
+
+      opts.separator ''
+
+      opts.on('--server[=PORT]', "Launch redis-stat web server (default port: #{RedisStat::DEFAULT_SERVER_PORT})") do |v|
+        options[:server_port] = v || RedisStat::DEFAULT_SERVER_PORT
+        if RUBY_PLATFORM == 'java'
+          raise ArgumentError.new("Sorry. redis-stat server currently does not support JRuby.")
+        end
+      end
+
+      opts.on('--daemon', "Daemonize redis-stat. Must be used with --server option.") do |v|
+        options[:daemon] = true
+        if RUBY_PLATFORM == 'java'
+          raise ArgumentError.new("Sorry. Daemonization is not supported in JRuby.")
+        end
+      end
+
+      opts.separator ''
 
       opts.on('--version', 'Show version') do
         puts RedisStat::VERSION
@@ -107,7 +125,10 @@ module Option
         raise ArgumentError.new("Invalid style")
       end
     end
-
+    
+    if options[:daemon] && options[:server_port].nil?
+      raise ArgumentError.new("--daemon option must be used in conjunction with --server option")
+    end
   end
 end
 end

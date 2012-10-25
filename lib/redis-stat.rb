@@ -3,6 +3,7 @@
 require 'redis-stat/version'
 require 'redis-stat/constants'
 require 'redis-stat/option'
+require 'redis-stat/server'
 require 'insensitive_hash'
 require 'redis'
 require 'tabularize'
@@ -12,12 +13,14 @@ require 'parallelize'
 require 'si'
 
 class RedisStat
+  attr_reader :hosts, :measures
+
   def initialize options = {}
     options      = RedisStat::Option::DEFAULT.merge options
     @hosts       = options[:hosts]
     @redises     = @hosts.map { |e| 
       host, port = e.split(':')
-      Redis.new(Hash[ {:host => host, :port => port}.select { |k, v| v } ])
+      Redis.new(Hash[ {:host => host, :port => port, :timeout => DEFAULT_REDIS_TIMEOUT}.select { |k, v| v } ])
     }
     @interval    = options[:interval]
     @max_count   = options[:count]
@@ -30,6 +33,12 @@ class RedisStat
     @count       = 0
     @style       = options[:style]
     @first_batch = true
+    @server_port = options[:server_port]
+    @daemonized  = options[:daemon]
+  end
+
+  def info
+    collect
   end
 
   def start output_stream
@@ -49,13 +58,18 @@ class RedisStat
         end
       end
 
-      @started_at = Time.now
-      prev_info = nil
-      loop do
-        info = collect
-        output info, prev_info, csv
 
+      @started_at = Time.now
+      prev_info   = nil
+      server      = start_server if @server_port
+
+      loop do
+        info        = collect
+        info_output = process info, prev_info
+        output info, info_output, csv unless @daemonized
+        server.push info, Hash[info_output] if server
         prev_info = info
+
         @count += 1
         break if @max_count && @count >= @max_count
         sleep @interval
@@ -76,6 +90,15 @@ class RedisStat
   end
 
 private
+  def start_server
+    RedisStat::Server.set :port, @server_port
+    RedisStat::Server.set :redis_stat, self
+    Thread.new { RedisStat::Server.run! }
+    RedisStat::Server.wait_until_running
+    trap('INT') { Thread.main.raise Interrupt }
+    RedisStat::Server
+  end
+
   def collect
     {}.insensitive.tap do |info|
       class << info
@@ -97,7 +120,7 @@ private
   end
 
   def update_term_size!
-    if RUBY_PLATFORM.match(/java/)
+    if RUBY_PLATFORM == 'java'
       require 'java'
       begin
         @term ||= Java::jline.Terminal.getTerminal
@@ -132,9 +155,7 @@ private
       end)
   end
 
-  def output info, prev_info, file
-    info_output = process info, prev_info
-
+  def output info, info_output, file
     @table ||= init_table info_output
 
     movement = nil
@@ -240,7 +261,8 @@ private
 
     case key
     when :at
-      Time.now.strftime('%H:%M:%S')
+      val = Time.now.strftime('%H:%M:%S')
+      [val, val]
     when :used_cpu_user, :used_cpu_sys
       val = get_diff.call(key)
       val &&= (val * 100).round

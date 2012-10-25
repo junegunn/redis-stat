@@ -5,6 +5,10 @@ require 'redis-stat'
 
 options = RedisStat::Option.parse ARGV
 rs = RedisStat.new options
+if options[:daemon]
+  require 'daemons'
+  Daemons.daemonize(:app_name => 'redis-stat-daemon')
+end
 begin
   rs.start $stdout
 rescue Exception

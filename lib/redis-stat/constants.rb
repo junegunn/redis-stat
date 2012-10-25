@@ -1,6 +1,9 @@
 class RedisStat
-  DEFAULT_TERM_WIDTH  = 180
-  DEFAULT_TERM_HEIGHT = 25
+  DEFAULT_TERM_WIDTH    = 180
+  DEFAULT_TERM_HEIGHT   = 25
+  DEFAULT_SERVER_PORT   = 63790
+  DEFAULT_REDIS_TIMEOUT = 30
+
 
   MEASURES = {
     :static => [
@@ -101,6 +104,7 @@ class RedisStat
     :expired_keys_per_second             => 'exp/s',
     :evicted_keys                        => 'evt',
     :evicted_keys_per_second             => 'evt/s',
+    :keys                                => 'keys',
     :keyspace_hits                       => 'hit',
     :keyspace_hits_per_second            => 'hit/s',
     :keyspace_misses                     => 'mis',

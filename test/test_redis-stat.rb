@@ -102,6 +102,28 @@ class TestRedisStat < Test::Unit::TestCase
       :style => :ascii
     }.sort, options.sort)
 
+    # Server
+    if RUBY_PLATFORM == 'java'
+      assert_raise(SystemExit) {
+        RedisStat::Option.parse(%w[-h localhost:8888 10 -a password --csv=/tmp/a.csv --style=ascii --server=5555])
+      }
+      assert_raise(SystemExit) {
+        RedisStat::Option.parse(%w[-h localhost:8888 10 -a password --csv=/tmp/a.csv --style=ascii --server=5555 --daemon])
+      }
+    else
+      options = RedisStat::Option.parse(%w[-h localhost:8888 10 -a password --csv=/tmp/a.csv --style=ascii --server=5555 --daemon])
+      assert_equal({
+        :auth => 'password',
+        :hosts => ['localhost:8888'],
+        :interval => 10,
+        :count => nil,
+        :csv => '/tmp/a.csv',
+        :server_port => "5555",
+        :style => :ascii,
+        :daemon => true
+      }.sort, options.sort)
+    end
+
     options = RedisStat::Option.parse(%w[--no-color])
     assert_equal true, options[:mono]
   end
@@ -118,6 +140,10 @@ class TestRedisStat < Test::Unit::TestCase
 
     assert_raise(SystemExit) {
       RedisStat::Option.parse(%w[--style=html])
+    }
+
+    assert_raise(SystemExit) {
+      RedisStat::Option.parse(%w[--daemon])
     }
   end
 
