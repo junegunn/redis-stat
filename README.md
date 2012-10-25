@@ -45,6 +45,8 @@ redis-stat localhost localhost:6380 localhost:6381 5
 redis-stat localhost localhost:6380 1 10 --csv=/tmp/output.csv --verbose
 ```
 
+<img src="https://github.com/junegunn/redis-stat/raw/master/screenshots/redis-stat-0.2.4.png" style="max-width: 700px"/>
+
 ## redis-stat in web browser
 
 When `--server` option is set, redis-stat will open up an embedded web server
@@ -58,13 +60,7 @@ redis-stat --verbose --server=8080 5
 redis-stat --server --daemon
 ```
 
-## Screenshot
-
-### Command-line output
-<img src="https://github.com/junegunn/redis-stat/raw/master/screenshots/redis-stat-0.2.4.png" style="width: 100%; max-width: 700px"/>
-
-### Monitoring redis on web browser
-<img src="https://github.com/junegunn/redis-stat/raw/master/screenshots/redis-stat-web.png" style="width: 100%; max-width: 700px"/>
+<img src="https://github.com/junegunn/redis-stat/raw/master/screenshots/redis-stat-web.png" style="max-width: 700px"/>
 
 ## Author
 - [Junegunn Choi](https://github.com/junegunn)
