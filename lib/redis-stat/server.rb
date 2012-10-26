@@ -32,7 +32,7 @@ class Server < Sinatra::Base
   class << self
     def wait_until_running
       while !RedisStat::Server.running?
-        sleep 1
+        sleep 0.5
       end
     end
 
