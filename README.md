@@ -1,13 +1,14 @@
 # redis-stat
 
-A Redis monitoring tool written in Ruby.
+_redis-stat_ is a simple Redis monitoring tool written in Ruby.
 
-You can monitor Redis servers
-- either with vmstat-like output from terminal
-- or with the dashboard page in web browser.
+It is based on [INFO](http://redis.io/commands/info) command of Redis,
+and thus generally won't affect the performance of the Redis instance
+unlike the other monitoring tools based on [MONITOR](http://redis.io/commands/monitor) command.
 
-(Note: it is highly likely that you are looking for the original [redis-stat](https://github.com/antirez/redis-tools/blob/master/redis-stat.c)
-included in [redis-tools](https://github.com/antirez/redis-tools) written by the creator of Redis himself.)
+_redis-stat_ allows you to monitor Redis instances
+- either with vmstat-like output from the terminal
+- or with the dashboard page served by its embedded web server.
 
 ## Installation
 
@@ -45,11 +46,13 @@ redis-stat localhost localhost:6380 localhost:6381 5
 redis-stat localhost localhost:6380 1 10 --csv=/tmp/output.csv --verbose
 ```
 
+### Screenshot
+
 <img src="https://github.com/junegunn/redis-stat/raw/master/screenshots/redis-stat-0.2.4.png" style="max-width: 700px"/>
 
 ## redis-stat in web browser
 
-When `--server` option is set, redis-stat will open up an embedded web server
+When `--server` option is set, redis-stat will open up an embedded web server (default port: 63790)
 in the background so that you can monitor Redis in your browser.
 
 ```
@@ -59,6 +62,8 @@ redis-stat --verbose --server=8080 5
 # redis-stat server can be daemonized
 redis-stat --server --daemon
 ```
+
+### Screenshot
 
 <img src="https://github.com/junegunn/redis-stat/raw/master/screenshots/redis-stat-web.png" style="max-width: 700px"/>
 
