@@ -3,7 +3,7 @@
 require 'redis-stat/version'
 require 'redis-stat/constants'
 require 'redis-stat/option'
-require 'redis-stat/server'
+require 'redis-stat/server' unless RUBY_PLATFORM == 'java'
 require 'insensitive_hash'
 require 'redis'
 require 'tabularize'
@@ -123,10 +123,18 @@ private
     if RUBY_PLATFORM == 'java'
       require 'java'
       begin
-        @term ||= Java::jline.Terminal.getTerminal
-        @term_width  = (@term.getTerminalWidth rescue DEFAULT_TERM_WIDTH)
-        @term_height = (@term.getTerminalHeight rescue DEFAULT_TERM_HEIGHT) - 4
-        return
+        case JRUBY_VERSION
+        when /^1\.7/
+          @term ||= Java::jline.console.ConsoleReader.new.getTerminal
+          @term_width  = (@term.width rescue DEFAULT_TERM_WIDTH)
+          @term_height = (@term.height rescue DEFAULT_TERM_HEIGHT) - 4
+          return
+        when /^1\.6/
+          @term ||= Java::jline.ConsoleReader.new.getTerminal
+          @term_width  = (@term.getTerminalWidth rescue DEFAULT_TERM_WIDTH)
+          @term_height = (@term.getTerminalHeight rescue DEFAULT_TERM_HEIGHT) - 4
+          return
+        end
       rescue Exception
         # Fallback to tput (which yields incorrect values as of now)
       end

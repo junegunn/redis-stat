@@ -43,7 +43,7 @@ module Option
       opts.on('--server[=PORT]', "Launch redis-stat web server (default port: #{RedisStat::DEFAULT_SERVER_PORT})") do |v|
         options[:server_port] = v || RedisStat::DEFAULT_SERVER_PORT
         if RUBY_PLATFORM == 'java'
-          raise ArgumentError.new("Sorry. redis-stat server currently does not support JRuby.")
+          raise ArgumentError.new("Sorry. redis-stat server is not supported in JRuby.")
         end
       end
 

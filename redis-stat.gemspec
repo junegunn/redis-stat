@@ -4,8 +4,8 @@ require File.expand_path('../lib/redis-stat/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Junegunn Choi"]
   gem.email         = ["junegunn.c@gmail.com"]
-  gem.description   = %q{A Redis monitoring tool}
-  gem.summary       = %q{A Redis monitoring tool}
+  gem.description   = %q{A Redis monitoring tool written in Ruby}
+  gem.summary       = %q{A Redis monitoring tool written in Ruby}
   gem.homepage      = "https://github.com/junegunn/redis-stat"
 
   gem.platform      = 'java' if RUBY_PLATFORM == 'java'
@@ -22,11 +22,13 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency "insensitive_hash", '~> 0.3.0'
   gem.add_runtime_dependency "parallelize", '~> 0.4.0'
   gem.add_runtime_dependency "si", '~> 0.1.3'
-  gem.add_runtime_dependency "sinatra", '~> 1.3.3'
-  gem.add_runtime_dependency "sinatra-contrib", '~> 1.3.2'
-  gem.add_runtime_dependency "thin", '~> 1.5.0' unless RUBY_PLATFORM == 'java'
-  gem.add_runtime_dependency "daemons", '~> 1.1.9' unless RUBY_PLATFORM == 'java'
-  gem.add_runtime_dependency "json", '~> 1.7.5'
+  unless RUBY_PLATFORM == 'java'
+    gem.add_runtime_dependency "sinatra", '~> 1.3.3'
+    gem.add_runtime_dependency "sinatra-contrib", '~> 1.3.2'
+    gem.add_runtime_dependency "thin", '~> 1.5.0' 
+    gem.add_runtime_dependency "json", '~> 1.7.5'
+    gem.add_runtime_dependency "daemons", '~> 1.1.9'
+  end
 
   gem.add_development_dependency 'test-unit'
 end
