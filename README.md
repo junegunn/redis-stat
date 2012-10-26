@@ -48,12 +48,15 @@ redis-stat localhost localhost:6380 1 10 --csv=/tmp/output.csv --verbose
 
 ### Screenshot
 
-<img src="https://github.com/junegunn/redis-stat/raw/master/screenshots/redis-stat-0.2.4.png" style="max-width: 700px"/>
+![Terminal output](https://github.com/junegunn/redis-stat/raw/master/screenshots/redis-stat-0.3.0.png)
 
 ## redis-stat in web browser
 
 When `--server` option is set, redis-stat will open up an embedded web server (default port: 63790)
 in the background so that you can monitor Redis in your browser.
+
+Since _redis-stat_ pushes updates every interval via [Server-sent events](http://www.w3.org/TR/eventsource/),
+modern browsers are required to view the page.
 
 ```
 redis-stat --server
@@ -65,7 +68,7 @@ redis-stat --server --daemon
 
 ### Screenshot
 
-<img src="https://github.com/junegunn/redis-stat/raw/master/screenshots/redis-stat-web.png" style="max-width: 700px"/>
+![Dashboard](https://github.com/junegunn/redis-stat/raw/master/screenshots/redis-stat-web.png)
 
 ## Author
 - [Junegunn Choi](https://github.com/junegunn)
