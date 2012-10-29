@@ -3,6 +3,9 @@ require 'json'
 
 class RedisStat
 class Server < Sinatra::Base
+  HISTORY_LENGTH  = 50
+  STAT_TABLE_ROWS = 10
+
   configure do
     unless RUBY_PLATFORM == 'java'
       require 'thin'
@@ -11,12 +14,14 @@ class Server < Sinatra::Base
     set :environment, :production
     set :root, File.join( File.dirname(__FILE__), 'server' )
     set :clients, []
+    set :history, []
   end
 
   get '/' do
     @hosts    = settings.redis_stat.hosts
     @info     = settings.redis_stat.info
     @measures = settings.redis_stat.measures
+    @history  = settings.history
     erb :index
   end
 
@@ -40,15 +45,15 @@ class Server < Sinatra::Base
       static = Hash[RedisStat::MEASURES[:static].map { |stat|
         [stat, info[stat]]
       }]
+      data = {:static => static, :dynamic => data}
 
-      data = [
-        "retry: 1000",
-        "data: #{{:static => static, :dynamic => data}.to_json}",
-        "\n"
-      ].join("\n")
+      @history = settings.history
+      @history << data
+      @history.shift if @history.length > HISTORY_LENGTH
 
+      resp = "data: #{data.to_json}\n\n"
       settings.clients.each do |cl|
-        cl << data
+        cl << resp
       end
     end
   end

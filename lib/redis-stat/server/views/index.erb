@@ -54,7 +54,7 @@
               </tr>
             </thead>
             <tbody id="info">
-              <% 10.times do %>
+              <% RedisStat::Server::STAT_TABLE_ROWS.times do %>
                 <tr><td colspan="<%= @measures.length %>">&nbsp;</td></tr>
               <% end %>
             </tbody>
@@ -125,15 +125,20 @@
 
     <script>
       $(function() {
-        initialize(
-          <%= @measures.to_json %>,
-          <%= Hash[@measures.map { |m| [m, RedisStat::COLORS[m].join(' ')] }].to_json %>)
+        initialize({
+          measures: <%= @measures.to_json %>,
+          colors:   <%= Hash[@measures.map { |m| [m, RedisStat::COLORS[m].join(' ')] }].to_json %>,
+          history:  <%= @history.to_json %>,
+          max:      <%= RedisStat::Server::HISTORY_LENGTH %>,
+          rows:     <%= RedisStat::Server::STAT_TABLE_ROWS %>})
 
         $("#stat_table th a").tooltip()
 
         var source = new EventSource("/pull")
         source.onmessage = function(e) {
-          update(JSON.parse(e.data))
+          appendToHistory(JSON.parse(e.data))
+          updateTable()
+          updatePlot()
         }
         source.onerror = function(e) {
           source.close()
