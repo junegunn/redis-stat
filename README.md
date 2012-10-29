@@ -83,3 +83,12 @@ redis-stat --server --daemon
 3. Commit your changes (`git commit -am 'Added some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
+
+## About the name _redis-stat_
+
+Since this project was supposed to be a vmstat-like monitoring script for Redis,
+naming it _redis-stat_ seemed like a nice idea. That was when I was unaware of the existence of
+the original [redis-stat](https://github.com/antirez/redis-tools/blob/master/redis-stat.c)
+included in [redis-tools](https://github.com/antirez/redis-tools) written by the creator of Redis himself. (My bad)
+Although the original C-version hasn't been updated for the past couple of years, you might want to check it out first.
+
