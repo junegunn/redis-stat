@@ -64,7 +64,22 @@ class RedisStat
       server      = start_server if @server_port
 
       loop do
-        info        = collect
+        errs = 0
+        info =
+          begin
+            collect
+          rescue Interrupt
+            raise
+          rescue Exception => e
+            if (errs += 1) < NUM_RETRIES
+              @os.puts if errs == 1
+              @os.puts ansi(:red, :bold) { "#{e} (#{errs}/#{NUM_RETRIES})" }
+              sleep @interval
+              retry
+            else
+              raise
+            end
+          end
         info_output = process info, prev_info
         output info, info_output, csv unless @daemonized
         server.push info, Hash[info_output] if server

@@ -64,6 +64,9 @@ redis-stat --verbose --server=8080 5
 
 # redis-stat server can be daemonized
 redis-stat --server --daemon
+
+# Kill the daemon
+killall -9 redis-stat-daemon
 ```
 
 ### Screenshot
