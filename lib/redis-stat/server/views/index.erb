@@ -39,12 +39,12 @@
       </div>
       <div class="row">
         <div class="span12">
-          <table id="stat_table" class="table table-striped table-bordered table-condensed">
+          <table id="stat_table" class="table table-striped table-bordered table-condensed <%= @verbose %>">
             <thead>
               <tr>
                 <% @measures.each do |m| %>
                   <th>
-                    <h5 class="text-info">
+                    <h5 class="text-info <%= @verbose %>">
                       <a href="#" rel="tooltip" title="<%= m %>">
                         <%= RedisStat::LABELS[m] %>
                       </a>

@@ -13,7 +13,7 @@ require 'parallelize'
 require 'si'
 
 class RedisStat
-  attr_reader :hosts, :measures
+  attr_reader :hosts, :measures, :verbose
 
   def initialize options = {}
     options      = RedisStat::Option::DEFAULT.merge options
@@ -28,7 +28,8 @@ class RedisStat
     @colors      = options[:colors] || COLORS
     @csv         = options[:csv]
     @auth        = options[:auth]
-    @measures    = MEASURES[ options[:verbose] ? :verbose : :default ]
+    @verbose     = options[:verbose]
+    @measures    = MEASURES[ @verbose ? :verbose : :default ]
     @all_measures= MEASURES.values.inject(:+).uniq - [:at]
     @count       = 0
     @style       = options[:style]

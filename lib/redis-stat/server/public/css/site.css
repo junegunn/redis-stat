@@ -34,7 +34,8 @@ body {
   text-align: right;
 }
 
-#stat_table tbody {
+#stat_table.verbose, #stat_table h5.verbose {
+  font-size: 12px;
 }
 
 #info_table th {
@@ -63,5 +64,3 @@ body {
   margin-right: 10px;
 }
 
-
-/* jqplot */
