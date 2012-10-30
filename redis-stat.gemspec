@@ -4,8 +4,8 @@ require File.expand_path('../lib/redis-stat/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Junegunn Choi"]
   gem.email         = ["junegunn.c@gmail.com"]
-  gem.description   = %q{A Redis monitoring tool written in Ruby}
-  gem.summary       = %q{A Redis monitoring tool written in Ruby}
+  gem.description   = %q{A real-time Redis monitoring tool written in Ruby}
+  gem.summary       = %q{A real-time Redis monitoring tool written in Ruby}
   gem.homepage      = "https://github.com/junegunn/redis-stat"
 
   gem.platform      = 'java' if RUBY_PLATFORM == 'java'
