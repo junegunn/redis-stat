@@ -129,6 +129,7 @@
           colors:   <%= Hash[@measures.map { |m| [m, RedisStat::COLORS[m].join(' ')] }].to_json %>,
           history:  <%= @history.to_json %>,
           max:      <%= RedisStat::Server::HISTORY_LENGTH %>,
+          fade_dur: <%= @interval < 1 ? 0 : 300 %>,
           rows:     <%= RedisStat::Server::STAT_TABLE_ROWS %>})
 
         $("#stat_table th a").tooltip()

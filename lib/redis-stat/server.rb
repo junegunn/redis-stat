@@ -21,6 +21,7 @@ class Server < Sinatra::Base
     @hosts    = settings.redis_stat.hosts
     @info     = settings.redis_stat.info
     @measures = settings.redis_stat.measures
+    @interval = settings.redis_stat.interval
     @verbose  = settings.redis_stat.verbose ? 'verbose' : ''
     @history  = settings.history
     erb :index

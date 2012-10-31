@@ -13,7 +13,7 @@ require 'parallelize'
 require 'si'
 
 class RedisStat
-  attr_reader :hosts, :measures, :verbose
+  attr_reader :hosts, :measures, :verbose, :interval
 
   def initialize options = {}
     options      = RedisStat::Option::DEFAULT.merge options
