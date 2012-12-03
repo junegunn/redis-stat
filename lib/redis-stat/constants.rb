@@ -12,11 +12,9 @@ class RedisStat
       :process_id,
       :uptime_in_seconds,
       :uptime_in_days,
-      :gcc_version,
       :role,
       :connected_slaves,
       :aof_enabled,
-      :vm_enabled
     ],
     :default => [
       :at,

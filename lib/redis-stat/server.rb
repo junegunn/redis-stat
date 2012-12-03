@@ -1,5 +1,6 @@
 require 'sinatra/base'
 require 'json'
+require 'thread'
 
 class RedisStat
 class Server < Sinatra::Base
@@ -7,7 +8,10 @@ class Server < Sinatra::Base
   STAT_TABLE_ROWS = 10
 
   configure do
-    unless RUBY_PLATFORM == 'java'
+    if RUBY_PLATFORM == 'java'
+      require 'puma'
+      set :server, :puma
+    else
       require 'thin'
       set :server, :thin
     end
@@ -15,6 +19,7 @@ class Server < Sinatra::Base
     set :root, File.join( File.dirname(__FILE__), 'server' )
     set :clients, []
     set :history, []
+    set :mutex, Mutex.new
   end
 
   get '/' do
@@ -30,9 +35,15 @@ class Server < Sinatra::Base
   get '/pull' do
     content_type 'text/event-stream'
 
-    stream(:keep_open) do |out|
-      settings.clients << out
-      out.callback { settings.clients.delete out }
+    if RUBY_PLATFORM == 'java'
+      if last = settings.mutex.synchronize { settings.history.last }
+        body "retry: #{settings.redis_stat.interval * 900}\ndata: #{last.to_json}\n\n"
+      end
+    else
+      stream(:keep_open) do |out|
+        settings.clients << out
+        out.callback { settings.clients.delete out }
+      end
     end
   end
 
@@ -47,11 +58,15 @@ class Server < Sinatra::Base
       static = Hash[RedisStat::MEASURES[:static].map { |stat|
         [stat, info[stat]]
       }]
-      data = {:static => static, :dynamic => data}
+      data = {:at => Time.now.to_i, :static => static, :dynamic => data}
 
-      @history = settings.history
-      @history << data
-      @history.shift if @history.length > HISTORY_LENGTH
+      hist = settings.history
+      settings.mutex.synchronize do
+        hist << data
+        hist.shift if hist.length > HISTORY_LENGTH
+      end
+
+      return if settings.clients.empty?
 
       resp = "data: #{data.to_json}\n\n"
       settings.clients.each do |cl|

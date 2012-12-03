@@ -42,9 +42,6 @@ module Option
 
       opts.on('--server[=PORT]', "Launch redis-stat web server (default port: #{RedisStat::DEFAULT_SERVER_PORT})") do |v|
         options[:server_port] = v || RedisStat::DEFAULT_SERVER_PORT
-        if RUBY_PLATFORM == 'java'
-          raise ArgumentError.new("Sorry. redis-stat server is not supported in JRuby.")
-        end
       end
 
       opts.on('--daemon', "Daemonize redis-stat. Must be used with --server option.") do |v|
@@ -66,7 +63,7 @@ module Option
         exit 0
       end
     }
-    
+
     begin
       opts.parse! argv
 
@@ -125,7 +122,7 @@ module Option
         raise ArgumentError.new("Invalid style")
       end
     end
-    
+
     if options[:daemon] && options[:server_port].nil?
       raise ArgumentError.new("--daemon option must be used in conjunction with --server option")
     end

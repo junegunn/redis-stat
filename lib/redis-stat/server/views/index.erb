@@ -26,6 +26,11 @@
       <div class="row">
         <div class="span12">
           <h3>Dashboard</h3>
+          <% unless RUBY_PLATFORM == 'java' %>
+          <div class="alert alert-error hide">
+            <h4>Lost connection to redis-stat</h4>
+          </div>
+          <% end %>
         </div>
       </div>
 
@@ -103,19 +108,6 @@
       <img style="position: fixed; top: 0; right: 0; border: 0; z-index: 10000" src="/forkme.png" alt="Fork me on GitHub">
     </a>
 
-    <div class="modal hide fade" id="fail" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-      <div class="modal-header">
-        <h3 id="myModalLabel">Oops!</h3>
-      </div>
-      <div class="modal-body">
-        <p>Lost connection to redis-stat.</p>
-        <p>Try reloading the page.</p>
-      </div>
-      <div class="modal-footer">
-        <a href="/" class="btn btn-primary">Reload</a>
-      </div>
-    </div>
-
     <footer class="footer">
       <div class="container">
         <p>Powered by <a href="http://twitter.github.com/bootstrap/">Bootstrap</a>, <a href="http://jquery.com/">jQuery</a> and <a href="http://www.jqplot.com/">jqPlot</a>.</p>
@@ -134,15 +126,19 @@
 
         $("#stat_table th a").tooltip()
 
+        // TODO Check (typeof(EventSource) !== "undefined")
+
         var source = new EventSource("/pull")
         source.onmessage = function(e) {
-          appendToHistory(JSON.parse(e.data))
-          updateTable()
-          updatePlot()
+          if (appendToHistory(JSON.parse(e.data))) {
+            $(".alert").fadeOut()
+            updateTable()
+            updatePlot()
+          }
         }
         source.onerror = function(e) {
-          source.close()
-          $('#fail').modal({backdrop: 'static'})
+          $(".alert").fadeIn()
+          // source.close()
         }
       })
     </script>

@@ -3,7 +3,7 @@
 require 'redis-stat/version'
 require 'redis-stat/constants'
 require 'redis-stat/option'
-require 'redis-stat/server' unless RUBY_PLATFORM == 'java'
+require 'redis-stat/server'
 require 'insensitive_hash'
 require 'redis'
 require 'tabularize'
@@ -18,7 +18,7 @@ class RedisStat
   def initialize options = {}
     options      = RedisStat::Option::DEFAULT.merge options
     @hosts       = options[:hosts]
-    @redises     = @hosts.map { |e| 
+    @redises     = @hosts.map { |e|
       host, port = e.split(':')
       Redis.new(Hash[ {:host => host, :port => port, :timeout => DEFAULT_REDIS_TIMEOUT}.select { |k, v| v } ])
     }
@@ -72,9 +72,12 @@ class RedisStat
           rescue Interrupt
             raise
           rescue Exception => e
-            if (errs += 1) < NUM_RETRIES
+            errs += 1
+            if server || errs < NUM_RETRIES
               @os.puts if errs == 1
-              @os.puts ansi(:red, :bold) { "#{e} (#{errs}/#{NUM_RETRIES})" }
+              @os.puts ansi(:red, :bold) {
+                "#{e} (#{ server ? "#{errs}" : [errs, NUM_RETRIES].join('/') })"
+              }
               sleep @interval
               retry
             else
@@ -260,7 +263,7 @@ private
     table << info_output.map { |pair|
       ansi(*((@colors[pair.first] || []) + [:underline])) {
         LABELS[pair.first] || pair.first
-      } 
+      }
     }
     table.separator!
     table
@@ -292,7 +295,7 @@ private
       val &&= (val * 100).round
       [humanize_number(val), val]
     when :keys
-      val = Hash[ info.select { |k, v| k =~ /^db[0-9]+$/ } ].values.inject(0) { |sum, vs| 
+      val = Hash[ info.select { |k, v| k =~ /^db[0-9]+$/ } ].values.inject(0) { |sum, vs|
         sum + vs.map { |v| Hash[ v.split(',').map { |e| e.split '=' } ]['keys'].to_i }.inject(:+)
       }
       [humanize_number(val), val]
