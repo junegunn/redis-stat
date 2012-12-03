@@ -9,12 +9,15 @@ class RedisStat
   MEASURES = {
     :static => [
       :redis_version,
+      :redis_mode,
       :process_id,
       :uptime_in_seconds,
       :uptime_in_days,
       :role,
       :connected_slaves,
       :aof_enabled,
+      [:rdb_bgsave_in_progress, :bgsave_in_progress],
+      [:rdb_last_save_time, :last_save_time],
     ],
     :default => [
       :at,
@@ -55,7 +58,7 @@ class RedisStat
       :keyspace_misses,
       :aof_current_size,
       :aof_base_size,
-      :changes_since_last_save,
+      [:rdb_changes_since_last_save, :changes_since_last_save],
       :pubsub_channels,
       :pubsub_patterns,
     ]
@@ -83,7 +86,7 @@ class RedisStat
     :keyspace_misses_per_second          => [:magenta],
     :aof_current_size                    => [:cyan],
     :aof_base_size                       => [:cyan],
-    :changes_since_last_save             => [:green, :bold],
+    :rdb_changes_since_last_save         => [:green, :bold],
     :pubsub_channels                     => [:cyan, :bold],
     :pubsub_patterns                     => [:cyan, :bold],
   }
@@ -110,7 +113,7 @@ class RedisStat
     :keyspace_misses_per_second          => 'mis/s',
     :aof_current_size                    => 'aofcs',
     :aof_base_size                       => 'aofbs',
-    :changes_since_last_save             => 'chsv',
+    :rdb_changes_since_last_save         => 'chsv',
     :pubsub_channels                     => 'psch',
     :pubsub_patterns                     => 'psp',
   }

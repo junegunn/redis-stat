@@ -85,7 +85,7 @@
               </tr>
             </thead>
             <tbody>
-              <% RedisStat::MEASURES[:static].each do |stat| %>
+              <% @tab_measures.each do |stat| %>
               <tr id="<%= stat %>">
                 <th>
                   <%= stat %>

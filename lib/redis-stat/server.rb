@@ -23,12 +23,13 @@ class Server < Sinatra::Base
   end
 
   get '/' do
-    @hosts    = settings.redis_stat.hosts
-    @info     = settings.redis_stat.info
-    @measures = settings.redis_stat.measures
-    @interval = settings.redis_stat.interval
-    @verbose  = settings.redis_stat.verbose ? 'verbose' : ''
-    @history  = settings.history
+    @hosts        = settings.redis_stat.hosts
+    @info         = settings.redis_stat.info
+    @measures     = settings.redis_stat.measures
+    @tab_measures = settings.redis_stat.tab_measures
+    @interval     = settings.redis_stat.interval
+    @verbose      = settings.redis_stat.verbose ? 'verbose' : ''
+    @history      = settings.history
     erb :index
   end
 
@@ -55,7 +56,7 @@ class Server < Sinatra::Base
     end
 
     def push info, data
-      static = Hash[RedisStat::MEASURES[:static].map { |stat|
+      static = Hash[settings.redis_stat.tab_measures.map { |stat|
         [stat, info[stat]]
       }]
       data = {:at => Time.now.to_i, :static => static, :dynamic => data}

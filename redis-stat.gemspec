@@ -23,6 +23,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency "parallelize", '~> 0.4.0'
   gem.add_runtime_dependency "si", '~> 0.1.4'
   gem.add_runtime_dependency "sinatra", '~> 1.3.3'
+  gem.add_runtime_dependency "json", '~> 1.7.5'
 
   if RUBY_PLATFORM == 'java'
     gem.add_runtime_dependency "puma", '~> 1.6.3'

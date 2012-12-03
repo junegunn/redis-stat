@@ -13,7 +13,7 @@ require 'parallelize'
 require 'si'
 
 class RedisStat
-  attr_reader :hosts, :measures, :verbose, :interval
+  attr_reader :hosts, :measures, :tab_measures, :verbose, :interval
 
   def initialize options = {}
     options      = RedisStat::Option::DEFAULT.merge options
@@ -29,7 +29,8 @@ class RedisStat
     @csv         = options[:csv]
     @auth        = options[:auth]
     @verbose     = options[:verbose]
-    @measures    = MEASURES[ @verbose ? :verbose : :default ]
+    @measures    = MEASURES[ @verbose ? :verbose : :default ].map { |m| [*m].first }
+    @tab_measures= MEASURES[:static].map { |m| [*m].first }
     @all_measures= MEASURES.values.inject(:+).uniq - [:at]
     @count       = 0
     @style       = options[:style]
@@ -131,8 +132,11 @@ private
         redis.info.insensitive
       }.each do |rinfo|
         (@all_measures + rinfo.keys.select { |k| k =~ /^db[0-9]+$/ }).each do |k|
+          ks = [*k]
+          v = ks.map { |e| rinfo[e] }.compact.first
+          k = ks.first
           info[k] ||= []
-          info[k] << rinfo[k]
+          info[k] << v
         end
       end
     end
@@ -244,7 +248,7 @@ private
     )
     tab << [nil] + @hosts.map { |h| ansi(:bold, :green) { h } }
     tab.separator!
-    MEASURES[:static].each do |key|
+    @tab_measures.each do |key|
       tab << [ansi(:bold) { key }] + info[key] unless info[key].compact.empty?
     end
     @os.puts tab
