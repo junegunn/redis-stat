@@ -59,7 +59,7 @@ class Server < Sinatra::Base
       static = Hash[settings.redis_stat.tab_measures.map { |stat|
         [stat, info[stat]]
       }]
-      data = {:at => Time.now.to_i, :static => static, :dynamic => data}
+      data = {:at => (Time.now.to_f * 1000).to_i, :static => static, :dynamic => data}
 
       hist = settings.history
       settings.mutex.synchronize do
