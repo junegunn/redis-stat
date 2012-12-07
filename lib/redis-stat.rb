@@ -290,6 +290,14 @@ private
       end
     end
 
+    get_ratio = lambda do |x, y|
+      if x > 0 && y > 0
+        x / (x + y) * 100
+      else
+        0
+      end
+    end
+
     case key
     when :at
       val = Time.now.strftime('%H:%M:%S')
@@ -310,6 +318,16 @@ private
     when :used_memory, :used_memory_rss, :aof_current_size, :aof_base_size
       val = info.sumf(key)
       [humanize_number(val.to_i, true), val]
+    when :keyspace_hits_ratio
+      hits = info.sumf(:keyspace_hits)
+      misses = info.sumf(:keyspace_misses)
+      val = get_ratio.call(hits, misses)
+      [humanize_number(val), val]
+    when :keyspace_hits_ratio_per_second
+      hits = get_diff.call(:keyspace_hits) || 0
+      misses = get_diff.call(:keyspace_misses) || 0
+      val = get_ratio.call(hits, misses)
+      [humanize_number(val), val]
     else
       val = info.sumf(key)
       [humanize_number(val), val]

@@ -78,6 +78,7 @@ killall -9 redis-stat-daemon
 
 ## Contributors
 - [Chris Meisl](https://github.com/cmeisl)
+- [Hyunseok Hwang](https://github.com/frhwang)
 
 ## Contributing
 
