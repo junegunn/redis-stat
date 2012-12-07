@@ -7,6 +7,7 @@ Gem::Specification.new do |gem|
   gem.description   = %q{A real-time Redis monitoring tool written in Ruby}
   gem.summary       = %q{A real-time Redis monitoring tool written in Ruby}
   gem.homepage      = "https://github.com/junegunn/redis-stat"
+  gem.license       = 'MIT'
 
   gem.platform      = 'java' if RUBY_PLATFORM == 'java'
   gem.files         = `git ls-files`.split("\n").reject { |f| f =~ /^screenshots/ }
