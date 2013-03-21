@@ -74,11 +74,11 @@
       </div>
 
       <div class="row">
-        <div class="span<%= [12, 2 + @hosts.length * 2].min %>">
-          <table id="info_table" class="table table-striped table-bordered table-condensed table-hover">
+        <div class="span12 scrollable">
+          <table id="info_table" class="table table-striped table-condensed table-hover">
             <thead>
               <tr>
-                <td></td>
+                <td width="1"></td>
                 <% @hosts.each do |host| %>
                   <th class="text-info"><%= host %></th>
                 <% end %>
