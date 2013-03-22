@@ -38,14 +38,6 @@ body {
   font-size: 11px;
 }
 
-#info_table th {
-  font-style: italic;
-}
-
-#info_table.table {
-  margin: 0;
-}
-
 .footer {
   padding: 30px 0;
   margin-top: 30px;
@@ -68,12 +60,36 @@ body {
   margin-right: 10px;
 }
 
-.scrollable {
+.info-wrapper {
   background-color: #fff;
   border: 1px solid #ddd;
   -webkit-border-radius: 4px;
      -moz-border-radius: 4px;
           border-radius: 4px;
   background-color: transparent;
+  padding: 0;
+}
+
+.info-wrapper div, .info-wrapper table.table {
+  margin: 0;
+}
+
+.info-wrapper th {
+  font-style: italic;
+}
+
+.info-wrapper .span2 {
+  width: 180px;
+}
+
+.info-wrapper .span2 table.table {
+  border-right: 1px solid #ddd;
+}
+
+.info-wrapper .span10 {
+  width: 760px;
+}
+
+.scrollable {
   overflow: auto;
 }
