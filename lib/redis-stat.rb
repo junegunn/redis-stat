@@ -7,7 +7,7 @@ require 'redis-stat/server'
 require 'insensitive_hash'
 require 'redis'
 require 'tabularize'
-require 'ansi'
+require 'ansi256'
 require 'csv'
 require 'parallelize'
 require 'si'
@@ -50,16 +50,7 @@ class RedisStat
     begin
       csv = File.open(@csv, 'w') if @csv
       update_term_size!
-
-      # Warm-up / authenticate only when needed
-      @redises.each do |r|
-        begin
-          r.info
-        rescue Redis::CommandError
-          r.auth @auth if @auth
-        end
-      end
-
+      authenticate!
 
       @started_at = Time.now
       prev_info   = nil
@@ -73,12 +64,15 @@ class RedisStat
           rescue Interrupt
             raise
           rescue Exception => e
+            if need_auth?(e)
+              authenticate!
+              retry
+            end
+
             errs += 1
             if server || errs < NUM_RETRIES
               @os.puts if errs == 1
-              @os.puts ansi(:red, :bold) {
-                "#{e} (#{ server ? "#{errs}" : [errs, NUM_RETRIES].join('/') })"
-              }
+              @os.puts "#{e} (#{ server ? "#{errs}" : [errs, NUM_RETRIES].join('/') })".red.bold
               sleep @interval
               retry
             else
@@ -97,16 +91,14 @@ class RedisStat
       @os.puts
     rescue Interrupt
       @os.puts
-      @os.puts ansi(:yellow, :bold) { "Interrupted." }
+      @os.puts "Interrupted.".yellow.bold
     rescue Exception => e
-      @os.puts ansi(:red, :bold) { e.to_s }
+      @os.puts e.to_s.red.bold
       raise
     ensure
       csv.close if csv
     end
-    @os.puts ansi(:blue, :bold) {
-      "Elapsed: #{"%.2f" % (Time.now - @started_at)} sec."
-    }
+    @os.puts "Elapsed: #{"%.2f" % (Time.now - @started_at)} sec.".blue.bold
   end
 
 private
@@ -208,7 +200,9 @@ private
 
     # Build output table
     @table << info_output.map { |pair|
-      ansi(*@colors[pair.first]) { [*pair.last].first }
+      # [ key, [ humanized, raw ] ]
+      msg = [*pair.last].first
+      colorize msg, *@colors[pair.first]
     }
     lines  = @table.to_s.lines.map(&:chomp)
     lines.delete_at @first_batch ? 1 : 0
@@ -247,28 +241,28 @@ private
       :border_style => @style,
       :screen_width => @term_width
     )
-    tab << [nil] + @hosts.map { |h| ansi(:bold, :green) { h } }
+    tab << [nil] + @hosts.map { |h| h.bold.green }
     tab.separator!
     @tab_measures.each do |key|
-      tab << [ansi(:bold) { key }] + info[key] unless info[key].compact.empty?
+      tab << [key.to_s.bold] + info[key] unless info[key].compact.empty?
     end
     @os.puts tab
   end
 
   def init_table info_output
-    table = Tabularize.new :unicode => false,
-                       :align        => :right,
-                       :border_style => @style,
-                       :border_color => @mono ? nil : ANSI::Code.red,
-                       :vborder      => ' ',
-                       :pad_left     => 0,
-                       :pad_right    => 0,
-                       :screen_width => @term_width
+    table = Tabularize.new(
+      :unicode      => false,
+      :align        => :right,
+      :border_style => @style,
+      :border_color => @mono ? nil : Ansi256.red,
+      :vborder      => ' ',
+      :pad_left     => 0,
+      :pad_right    => 0,
+      :screen_width => @term_width)
     table.separator!
     table << info_output.map { |pair|
-      ansi(*((@colors[pair.first] || []) + [:underline])) {
-        LABELS[pair.first] || pair.first
-      }
+      key = pair.first
+      colorize LABELS.fetch(key, key), *([*@colors[key]] << :underline)
     }
     table.separator!
     table
@@ -276,6 +270,7 @@ private
 
   def process info, prev_info
     @measures.map { |key|
+      # [ key, [humanized, raw] ]
       [ key, process_how(info, prev_info, key) ]
     }.select { |pair| pair.last }
   end
@@ -286,14 +281,6 @@ private
     get_diff = lambda do |label|
       if dur && dur > 0
         (info.sumf(label) - prev_info.sumf(label)) / dur
-      else
-        nil
-      end
-    end
-
-    get_ratio = lambda do |x, y|
-      if x > 0 || y > 0
-        x / (x + y) * 100
       else
         nil
       end
@@ -322,16 +309,24 @@ private
     when :keyspace_hit_ratio
       hits = info.sumf(:keyspace_hits)
       misses = info.sumf(:keyspace_misses)
-      val = get_ratio.call(hits, misses)
+      val = ratio(hits, misses)
       [humanize_number(val), val]
     when :keyspace_hit_ratio_per_second
       hits = get_diff.call(:keyspace_hits) || 0
       misses = get_diff.call(:keyspace_misses) || 0
-      val = get_ratio.call(hits, misses)
+      val = ratio(hits, misses)
       [humanize_number(val), val]
     else
       val = info.sumf(key)
       [humanize_number(val), val]
+    end
+  end
+
+  def ratio x, y
+    if x > 0 || y > 0
+      x / (x + y) * 100
+    else
+      nil
     end
   end
 
@@ -346,11 +341,20 @@ private
     end
   end
 
-  def ansi *args, &block
-    if @mono || args.empty?
-      block.call
-    else
-      ANSI::Code.ansi *args, &block
+  def colorize str, *colors
+    colors.each do |color|
+      str = str.send color
     end
+    str
+  end
+
+  def need_auth? e
+    @auth && e.is_a?(Redis::CommandError) && e.to_s =~ /operation not permitted/
+  end
+
+  def authenticate!
+    @redises.each do |r|
+      r.ping rescue (r.auth @auth)
+    end if @auth
   end
 end

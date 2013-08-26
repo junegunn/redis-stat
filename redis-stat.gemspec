@@ -17,7 +17,7 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = RedisStat::VERSION
 
-  gem.add_runtime_dependency "ansi", '~> 1.4.3'
+  gem.add_runtime_dependency "ansi256", '~> 0.2.5'
   gem.add_runtime_dependency "redis", '~> 3.0.2'
   gem.add_runtime_dependency "tabularize", '~> 0.2.9'
   gem.add_runtime_dependency "insensitive_hash", '~> 0.3.0'
