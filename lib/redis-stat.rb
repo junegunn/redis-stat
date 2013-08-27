@@ -191,6 +191,7 @@ private
     file.puts CSV.generate_line(info_output.map { |pair|
       [*pair.last].last
     })
+    file.flush
   end
 
   def output_term info_output
