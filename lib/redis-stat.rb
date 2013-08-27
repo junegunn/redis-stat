@@ -81,6 +81,7 @@ class RedisStat
             if server || errs < NUM_RETRIES
               @os.puts if errs == 1
               @os.puts "#{e} (#{ server ? "#{errs}" : [errs, NUM_RETRIES].join('/') })".red.bold
+              server.alert "#{e} (#{errs})" if server
               sleep @interval
               retry
             else

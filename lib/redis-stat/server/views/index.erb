@@ -26,11 +26,9 @@
       <div class="row">
         <div class="span12">
           <h3>Dashboard</h3>
-          <% unless RUBY_PLATFORM == 'java' %>
           <div class="alert alert-error hide">
-            <h4>Lost connection to redis-stat</h4>
+            <h4></h4>
           </div>
-          <% end %>
         </div>
       </div>
 
@@ -144,16 +142,23 @@
 
         var source = new EventSource("/pull")
         source.onmessage = function(e) {
-          if (appendToHistory(JSON.parse(e.data))) {
+          var json = JSON.parse(e.data);
+          if (json.error) {
+            $(".alert h4").text(json.error);
+            $(".alert").fadeIn();
+          } else if (appendToHistory(json)) {
             $(".alert").fadeOut()
             updateTable()
             updatePlot()
           }
         }
+        <% unless RUBY_PLATFORM == 'java' %>
         source.onerror = function(e) {
-          $(".alert").fadeIn()
+          $(".alert h4").text("Lost connection to redis-stat");
+          $(".alert").fadeIn();
           // source.close()
         }
+        <% end %>
       })
     </script>
   </body>
