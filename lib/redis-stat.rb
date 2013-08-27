@@ -11,12 +11,18 @@ require 'ansi256'
 require 'csv'
 require 'parallelize'
 require 'si'
+require 'rbconfig'
 
 class RedisStat
   attr_reader :hosts, :measures, :tab_measures, :verbose, :interval
 
   def initialize options = {}
-    options      = RedisStat::Option::DEFAULT.merge options
+    options = RedisStat::Option::DEFAULT.merge options
+    windows = RbConfig::CONFIG['target_os'] =~ /mswin|mingw/
+
+    Ansi256.enabled = STDOUT.tty? && !(windows || options[:mono])
+    options[:style] = :ascii if windows
+
     @hosts       = options[:hosts]
     @redises     = @hosts.map { |e|
       host, port = e.split(':')
@@ -24,7 +30,6 @@ class RedisStat
     }
     @interval    = options[:interval]
     @max_count   = options[:count]
-    @mono        = options[:mono]
     @colors      = options[:colors] || COLORS
     @csv         = options[:csv]
     @auth        = options[:auth]
@@ -34,6 +39,7 @@ class RedisStat
     @all_measures= MEASURES.values.inject(:+).uniq - [:at]
     @count       = 0
     @style       = options[:style]
+    @varwidth    = STDOUT.tty? && !windows
     @first_batch = true
     @server_port = options[:server_port]
     @server_thr  = nil
@@ -145,6 +151,7 @@ private
       begin
         case JRUBY_VERSION
         when /^1\.7/
+          # TODO Currently Windows terminal is not supported: always returns 80x24
           @term ||= Java::jline.console.ConsoleReader.new.getTerminal
           @term_width  = (@term.width rescue DEFAULT_TERM_WIDTH)
           @term_height = (@term.height rescue DEFAULT_TERM_HEIGHT) - 4
@@ -165,25 +172,28 @@ private
   end
 
   def move! lines
-    return if lines == 0
+    return if lines == 0 || !@varwidth
 
     @os.print(
-      if defined?(Win32::Console)
-        if lines < 0
-          "\e[#{- lines}F"
-        else
-          "\e[#{lines}E"
-        end
+      if lines < 0
+        "\e[#{- lines}A\e[0G"
       else
-        if lines < 0
-          "\e[#{- lines}A\e[0G"
-        else
-          "\e[#{lines}B\e[0G"
-        end
-      end)
+        "\e[#{lines}B\e[0G"
+      end
+    )
   end
 
-  def output info, info_output, file
+  def output_file info_output, file
+    file.puts CSV.generate_line(info_output.map { |pair|
+      LABELS[pair.first] || pair.first
+    }) if @count == 0
+
+    file.puts CSV.generate_line(info_output.map { |pair|
+      [*pair.last].last
+    })
+  end
+
+  def output_term info_output
     @table ||= init_table info_output
 
     movement = nil
@@ -191,11 +201,6 @@ private
       output_static_info info
 
       movement = 0
-      if file
-        file.puts CSV.generate_line(info_output.map { |pair|
-          LABELS[pair.first] || pair.first
-        })
-      end
     elsif @count % @term_height == 0
       @first_batch = false
       movement = -1
@@ -209,31 +214,30 @@ private
       msg = [*pair.last].first
       colorize msg, *@colors[pair.first]
     }
-    lines  = @table.to_s.lines.map(&:chomp)
+    lines = @table.to_s.lines.map(&:chomp)
     lines.delete_at @first_batch ? 1 : 0
     width  = lines.first.length
     height = lines.length
 
-    # Calculate the number of lines to go upward
-    if movement.nil?
-      if @prev_width && @prev_width == width
-        lines = lines[-2..-1]
-        movement = -1
-      else
-        movement = -(height - 1)
+    if @varwidth
+      # Calculate the number of lines to go upward
+      if movement.nil?
+        if @prev_width && @prev_width == width
+          lines = lines[-2..-1]
+          movement = -1
+        else
+          movement = -(height - 1)
+        end
       end
+    else
+      lines = movement ? lines[0..-2] : lines[-2..-2]
     end
     @prev_width = width
 
     move! movement
     begin
       @os.print $/ + lines.join($/)
-
-      if file
-        file.puts CSV.generate_line(info_output.map { |pair|
-          [*pair.last].last
-        })
-      end
+      @os.flush
     rescue Interrupt
       move! -movement
       raise
@@ -254,12 +258,17 @@ private
     @os.puts tab
   end
 
+  def output info, info_output, file
+    output_term info_output
+    output_file info_output, file if file
+  end
+
   def init_table info_output
     table = Tabularize.new(
       :unicode      => false,
       :align        => :right,
       :border_style => @style,
-      :border_color => @mono ? nil : Ansi256.red,
+      :border_color => (Ansi256.enabled? ? Ansi256.red : nil),
       :vborder      => ' ',
       :pad_left     => 0,
       :pad_right    => 0,
@@ -267,7 +276,7 @@ private
     table.separator!
     table << info_output.map { |pair|
       key = pair.first
-      colorize LABELS.fetch(key, key), *([*@colors[key]] << :underline)
+      colorize LABELS.fetch(key, key), :underline, *@colors[key]
     }
     table.separator!
     table
