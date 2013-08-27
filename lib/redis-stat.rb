@@ -56,7 +56,7 @@ class RedisStat
     trap('INT') { Thread.main.raise Interrupt }
 
     begin
-      csv = File.open(@csv, 'w') if @csv
+      csv = File.open(File.expand_path(@csv), 'w') if @csv
       update_term_size!
       authenticate!
 
