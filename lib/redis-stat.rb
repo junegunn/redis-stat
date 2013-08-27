@@ -36,6 +36,7 @@ class RedisStat
     @style       = options[:style]
     @first_batch = true
     @server_port = options[:server_port]
+    @server_thr  = nil
     @daemonized  = options[:daemon]
   end
 
@@ -92,6 +93,10 @@ class RedisStat
     rescue Interrupt
       @os.puts
       @os.puts "Interrupted.".yellow.bold
+      if @server_thr
+        @server_thr.raise Interrupt
+        @server_thr.join
+      end
     rescue Exception => e
       @os.puts e.to_s.red.bold
       raise
@@ -105,7 +110,7 @@ private
   def start_server
     RedisStat::Server.set :port, @server_port
     RedisStat::Server.set :redis_stat, self
-    Thread.new { RedisStat::Server.run! }
+    @server_thr = Thread.new { RedisStat::Server.run! }
     RedisStat::Server.wait_until_running
     trap('INT') { Thread.main.raise Interrupt }
     RedisStat::Server
