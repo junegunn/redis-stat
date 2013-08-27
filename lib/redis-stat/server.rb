@@ -33,9 +33,7 @@ class Server < Sinatra::Base
     @history      = settings.history
     @info         =
       begin
-        settings.mutex.synchronize do
-          settings.last_info = settings.redis_stat.info
-        end
+        settings.last_info = settings.redis_stat.info
       rescue Exception => e
         settings.last_info || raise
       end
