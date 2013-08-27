@@ -12,6 +12,7 @@ require 'csv'
 require 'parallelize'
 require 'si'
 require 'rbconfig'
+require 'lps'
 
 class RedisStat
   attr_reader :hosts, :measures, :tab_measures, :verbose, :interval
@@ -63,7 +64,7 @@ class RedisStat
       prev_info   = nil
       server      = start_server if @server_port
 
-      loop do
+      LPS.interval(@interval).loop do
         errs = 0
         info =
           begin
@@ -93,7 +94,6 @@ class RedisStat
 
         @count += 1
         break if @max_count && @count >= @max_count
-        sleep @interval
       end
       @os.puts
     rescue Interrupt

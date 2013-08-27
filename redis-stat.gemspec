@@ -25,6 +25,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency "si", '~> 0.1.4'
   gem.add_runtime_dependency "sinatra", '~> 1.3.3'
   gem.add_runtime_dependency "json", '~> 1.7.5'
+  gem.add_runtime_dependency "lps", '~> 0.2.0'
 
   if RUBY_PLATFORM == 'java'
     gem.add_runtime_dependency "puma", '~> 2.3.2'
