@@ -73,6 +73,12 @@ killall -9 redis-stat-daemon
 
 ![Dashboard](https://github.com/junegunn/redis-stat/raw/master/screenshots/redis-stat-web.png)
 
+## Windows support
+
+If you're running Windows, you can only install redis-stat on
+[JRuby](http://jruby.org/). Notice that fancy terminal colors will not be
+printed as they are not supported in the default Windows command prompt.
+
 ## Author
 - [Junegunn Choi](https://github.com/junegunn)
 
