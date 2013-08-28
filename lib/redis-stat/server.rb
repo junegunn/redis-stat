@@ -1,6 +1,7 @@
 require 'sinatra/base'
 require 'json'
 require 'thread'
+require 'set'
 
 class RedisStat
 class Server < Sinatra::Base
@@ -17,26 +18,36 @@ class Server < Sinatra::Base
     end
     set :environment, :production
     set :root, File.join( File.dirname(__FILE__), 'server' )
-    set :clients, []
-    set :history, []
-    set :error, nil
-    set :last_info, nil
     set :mutex, Mutex.new
+
+    set :clients,    Set.new
+    set :history,    []
+    set :last_error, nil
+  end
+
+  helpers do
+    def sync
+      settings.mutex.synchronize { yield }
+    end
+  end
+
+  not_found do
+    redirect '/'
   end
 
   get '/' do
-    @hosts        = settings.redis_stat.hosts
-    @measures     = settings.redis_stat.measures
-    @tab_measures = settings.redis_stat.tab_measures
-    @interval     = settings.redis_stat.interval
-    @verbose      = settings.redis_stat.verbose ? 'verbose' : ''
-    @history      = settings.history
-    @info         =
-      begin
-        settings.last_info = settings.redis_stat.info
-      rescue Exception => e
-        settings.last_info || raise
-      end
+    redis_stat    = settings.redis_stat
+    @hosts        = redis_stat.hosts
+    @measures     = redis_stat.measures
+    @tab_measures = redis_stat.tab_measures
+    @interval     = redis_stat.interval
+    @verbose      = redis_stat.verbose ? 'verbose' : ''
+    @history      = sync { settings.history.dup }
+
+    info = redis_stat.info rescue nil
+    sync do
+      @info = info ? (settings.last_info = info) : settings.last_info
+    end
     erb :index
   end
 
@@ -45,9 +56,9 @@ class Server < Sinatra::Base
 
     if RUBY_PLATFORM == 'java'
       data =
-        settings.mutex.synchronize {
-          if settings.error
-            { :error => settings.error }
+        sync {
+          if settings.last_error
+            { :error => settings.last_error }
           elsif last = settings.history.last
             last
           else
@@ -57,8 +68,10 @@ class Server < Sinatra::Base
       body "retry: #{settings.redis_stat.interval * 900}\ndata: #{data}\n\n"
     else
       stream(:keep_open) do |out|
-        settings.clients << out
-        out.callback { settings.clients.delete out }
+        sync do
+          settings.clients << out
+          out.callback { settings.clients.delete out }
+        end
       end
     end
   end
@@ -77,26 +90,28 @@ class Server < Sinatra::Base
       data = {:at => (Time.now.to_f * 1000).to_i, :static => static, :dynamic => data}
 
       settings.mutex.synchronize do
-        settings.error = nil
+        settings.last_error = nil
         hist = settings.history
         hist << data
         hist.shift if hist.length > HISTORY_LENGTH
       end
-
-      return if settings.clients.empty?
-
-      resp = "data: #{data.to_json}\n\n"
-      settings.clients.each do |cl|
-        cl << resp
-      end
+      publish data
     end
 
     def alert error
-      settings.error = error
+      settings.mutex.synchronize do
+        settings.last_error = error
+      end
+      publish({ :error => error })
+    end
 
-      return if settings.clients.empty?
-      resp = "data: #{{ :error => error }.to_json}\n\n"
-      settings.clients.each do |cl|
+  private
+    def publish data
+      clients = settings.mutex.synchronize { settings.clients.dup }
+      return if clients.empty?
+
+      resp = "data: #{data.to_json}\n\n"
+      clients.each do |cl|
         cl << resp
       end
     end

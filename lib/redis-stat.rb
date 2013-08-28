@@ -117,6 +117,7 @@ private
   def start_server
     RedisStat::Server.set :port, @server_port
     RedisStat::Server.set :redis_stat, self
+    RedisStat::Server.set :last_info, info
     @server_thr = Thread.new { RedisStat::Server.run! }
     RedisStat::Server.wait_until_running
     trap('INT') { Thread.main.raise Interrupt }
