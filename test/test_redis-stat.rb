@@ -105,9 +105,6 @@ class TestRedisStat < Test::Unit::TestCase
     # Server
     if RUBY_PLATFORM == 'java'
       assert_raise(SystemExit) {
-        RedisStat::Option.parse(%w[-h localhost:8888 10 -a password --csv=/tmp/a.csv --style=ascii --server=5555])
-      }
-      assert_raise(SystemExit) {
         RedisStat::Option.parse(%w[-h localhost:8888 10 -a password --csv=/tmp/a.csv --style=ascii --server=5555 --daemon])
       }
     else
