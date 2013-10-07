@@ -102,3 +102,7 @@ the original [redis-stat](https://github.com/antirez/redis-tools/blob/master/red
 included in [redis-tools](https://github.com/antirez/redis-tools) written by the creator of Redis himself. (My bad)
 Although the original C-version hasn't been updated for the past couple of years, you might want to check it out first.
 
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/junegunn/redis-stat/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
