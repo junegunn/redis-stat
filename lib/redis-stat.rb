@@ -4,6 +4,7 @@ require 'redis-stat/version'
 require 'redis-stat/constants'
 require 'redis-stat/option'
 require 'redis-stat/server'
+require 'redis-stat/elasticsearch'
 require 'insensitive_hash'
 require 'redis'
 require 'tabularize'
@@ -24,27 +25,28 @@ class RedisStat
     Ansi256.enabled = STDOUT.tty? && !(windows || options[:mono])
     options[:style] = :ascii if windows
 
-    @hosts       = options[:hosts]
-    @redises     = @hosts.map { |e|
-      host, port = e.split(':')
+    @hosts         = options[:hosts]
+    @redises       = @hosts.map { |e|
+      host, port   = e.split(':')
       Redis.new(Hash[ {:host => host, :port => port, :timeout => DEFAULT_REDIS_TIMEOUT}.select { |k, v| v } ])
     }
-    @interval    = options[:interval]
-    @max_count   = options[:count]
-    @colors      = options[:colors] || COLORS
-    @csv         = options[:csv]
-    @auth        = options[:auth]
-    @verbose     = options[:verbose]
-    @measures    = MEASURES[ @verbose ? :verbose : :default ].map { |m| [*m].first }
-    @tab_measures= MEASURES[:static].map { |m| [*m].first }
-    @all_measures= MEASURES.values.inject(:+).uniq - [:at]
-    @count       = 0
-    @style       = options[:style]
-    @varwidth    = STDOUT.tty? && !windows
-    @first_batch = true
-    @server_port = options[:server_port]
-    @server_thr  = nil
-    @daemonized  = options[:daemon]
+    @interval      = options[:interval]
+    @max_count     = options[:count]
+    @colors        = options[:colors] || COLORS
+    @csv           = options[:csv]
+    @auth          = options[:auth]
+    @verbose       = options[:verbose]
+    @measures      = MEASURES[ @verbose ? :verbose : :default ].map { |m| [*m].first }
+    @tab_measures  = MEASURES[:static].map { |m| [*m].first }
+    @all_measures  = MEASURES.values.inject(:+).uniq - [:at]
+    @count         = 0
+    @style         = options[:style]
+    @varwidth      = STDOUT.tty? && !windows
+    @first_batch   = true
+    @server_port   = options[:server_port]
+    @server_thr    = nil
+    @daemonized    = options[:daemon]
+    @elasticsearch = options[:es]
   end
 
   def info
@@ -264,6 +266,11 @@ private
   def output info, info_output, file
     output_term info_output
     output_file info_output, file if file
+    output_es hosts, info  if @elasticsearch
+  end
+
+  def output_es hosts, info
+    ElasticsearchOutputter.new(hosts, info, @elasticsearch).output
   end
 
   def init_table info_output

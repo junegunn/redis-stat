@@ -38,6 +38,10 @@ module Option
         options[:csv] = v
       end
 
+      opts.on('--es=ELASTICSEARCH_PATH', 'Send results to elasticsearch') do |v|
+        options[:es] = v
+      end
+
       opts.separator ''
 
       opts.on('--server[=PORT]', "Launch redis-stat web server (default port: #{RedisStat::DEFAULT_SERVER_PORT})") do |v|
