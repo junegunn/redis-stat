@@ -14,10 +14,11 @@ class ElasticsearchOutputter
     :rdb_last_save_time      => true,
   }
 
-  def initialize hosts, info, elasticsearch
-    @hosts         = hosts
-    @info          = info
-    @client        = Elasticsearch::Client.new url: elasticsearch
+  def initialize hosts, info, elasticsearch, index
+    @hosts  = hosts
+    @info   = info
+    @client = Elasticsearch::Client.new url: elasticsearch
+    @index  = index
   end
 
   def link_hosts_to_info
@@ -45,14 +46,18 @@ class ElasticsearchOutputter
     end
   end
 
+  def index
+    @index ||= "services"
+  end
+
   def output
     results = convert_to_i
     results.map do |host, entries|
       time = entries[:at]
       entry = {
-        :index     => "services",
-        :type      => "redis",
-        :body       => entries.merge({
+        :index => index,
+        :type  => "redis",
+        :body  => entries.merge({
           :@timestamp => Time.at(time).strftime("%FT%T%:z"),
           :host       => host
         }),
