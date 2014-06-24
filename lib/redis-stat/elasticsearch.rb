@@ -2,7 +2,7 @@ require 'elasticsearch'
 require 'date'
 
 class ElasticsearchOutputter
-  attr_reader :hosts, :info, :elasticsearch
+  attr_reader :hosts, :info, :client
 
   TO_I = {
     :process_id              => true,
@@ -17,7 +17,7 @@ class ElasticsearchOutputter
   def initialize hosts, info, elasticsearch
     @hosts         = hosts
     @info          = info
-    @elasticsearch = elasticsearch
+    @client        = Elasticsearch::Client.new url: elasticsearch
   end
 
   def link_hosts_to_info
@@ -57,7 +57,7 @@ class ElasticsearchOutputter
           :host       => host
         }),
       }
-      client = Elasticsearch::Client.new url: elasticsearch
+
       client.index entry
     end
   end
