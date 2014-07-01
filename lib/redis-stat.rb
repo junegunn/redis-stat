@@ -47,7 +47,6 @@ class RedisStat
     @server_thr    = nil
     @daemonized    = options[:daemon]
     @elasticsearch = options[:es]
-    @index         = options[:index]
   end
 
   def info
@@ -271,7 +270,7 @@ private
   end
 
   def output_es hosts, info
-    ElasticsearchOutputter.new(hosts, info, @elasticsearch, @index).output
+    ElasticsearchOutputter.new(hosts, info, @elasticsearch).output
   end
 
   def init_table info_output

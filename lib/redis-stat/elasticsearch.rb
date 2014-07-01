@@ -1,8 +1,9 @@
 require 'elasticsearch'
 require 'date'
+require 'uri'
 
 class ElasticsearchOutputter
-  attr_reader :hosts, :info, :client
+  attr_reader :hosts, :info, :index, :client
 
   TO_I = {
     :process_id              => true,
@@ -14,11 +15,26 @@ class ElasticsearchOutputter
     :rdb_last_save_time      => true,
   }
 
-  def initialize hosts, info, elasticsearch, index
-    @hosts  = hosts
-    @info   = info
-    @client = Elasticsearch::Client.new url: elasticsearch
-    @index  = index
+  DEFAULT_INDEX = "services"
+
+  def initialize hosts, info, elasticsearch
+    url, @index  = parse_url elasticsearch
+    @hosts       = hosts
+    @info        = info
+    @client      = Elasticsearch::Client.new url: url
+  end
+
+  def parse_url elasticsearch
+    unless elasticsearch.match(/http(s?)/)
+      elasticsearch = "http://#{elasticsearch}"
+    end
+
+    uri    = URI.parse elasticsearch
+    path   = uri.path
+    index  = path == "" ? DEFAULT_INDEX : path.split("/")[-1]
+    url    = elasticsearch.gsub "/#{index}", ""
+
+    [url, index]
   end
 
   def link_hosts_to_info
@@ -44,10 +60,6 @@ class ElasticsearchOutputter
         end
       end
     end
-  end
-
-  def index
-    @index ||= "services"
   end
 
   def output

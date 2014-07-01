@@ -42,10 +42,6 @@ module Option
         options[:es] = v
       end
 
-      opts.on('--index=INDEX', 'Elasticsearch index to send results') do |v|
-        options[:index] = v
-      end
-
       opts.separator ''
 
       opts.on('--server[=PORT]', "Launch redis-stat web server (default port: #{RedisStat::DEFAULT_SERVER_PORT})") do |v|
