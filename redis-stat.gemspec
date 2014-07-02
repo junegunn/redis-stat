@@ -26,6 +26,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency "sinatra", '~> 1.3.3'
   gem.add_runtime_dependency "json", '~> 1.7.5'
   gem.add_runtime_dependency "lps", '~> 0.2.0'
+  gem.add_runtime_dependency "elasticsearch", '~> 1.0.0'
 
   if RUBY_PLATFORM == 'java'
     gem.add_runtime_dependency "puma", '~> 2.3.2'
@@ -33,6 +34,4 @@ Gem::Specification.new do |gem|
     gem.add_runtime_dependency "thin", '~> 1.5.0'
     gem.add_runtime_dependency "daemons", '~> 1.1.9'
   end
-
-  gem.add_development_dependency 'test-unit'
 end

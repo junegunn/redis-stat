@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 
-# DISCLAIMER: 
+# DISCLAIMER:
 #   Not a real test!
 #   Just a helper script for running scripts with local source
 
