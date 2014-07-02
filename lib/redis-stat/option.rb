@@ -38,8 +38,8 @@ module Option
         options[:csv] = v
       end
 
-      opts.on('--es=ELASTICSEARCH_PATH', 'Send results to elasticsearch') do |v|
-        options[:es] = v
+      opts.on('--es=ELASTICSEARCH_URL', 'Send results to Elasticsearch') do |v|
+        options[:es] = RedisStat::ElasticsearchSink.parse_url v
       end
 
       opts.separator ''

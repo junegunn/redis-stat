@@ -2,7 +2,8 @@ require 'elasticsearch'
 require 'date'
 require 'uri'
 
-class ElasticsearchOutputter
+class RedisStat
+class ElasticsearchSink
   attr_reader :hosts, :info, :index, :client
 
   TO_I = {
@@ -17,26 +18,44 @@ class ElasticsearchOutputter
 
   DEFAULT_INDEX = "services"
 
+  def self.parse_url elasticsearch
+    unless elasticsearch.match(%r[^https?://])
+      elasticsearch = "http://#{elasticsearch}"
+    end
+
+    uri      = URI.parse elasticsearch
+    path     = uri.path
+    index    = path == '' ? DEFAULT_INDEX : path.split('/').last
+    uri.path = ''
+
+    [uri.to_s, index]
+  end
+
   def initialize hosts, info, elasticsearch
-    url, @index  = parse_url elasticsearch
+    url, @index  = elasticsearch
     @hosts       = hosts
     @info        = info
     @client      = Elasticsearch::Client.new url: url
   end
 
-  def parse_url elasticsearch
-    unless elasticsearch.match(/http(s?)/)
-      elasticsearch = "http://#{elasticsearch}"
+  def output
+    results = convert_to_i
+    results.map do |host, entries|
+      time = entries[:at]
+      entry = {
+        :index => index,
+        :type  => "redis",
+        :body  => entries.merge({
+          :@timestamp => Time.at(time).strftime("%FT%T%:z"),
+          :host       => host
+        }),
+      }
+
+      client.index entry
     end
-
-    uri    = URI.parse elasticsearch
-    path   = uri.path
-    index  = path == "" ? DEFAULT_INDEX : path.split("/")[-1]
-    url    = elasticsearch.gsub "/#{index}", ""
-
-    [url, index]
   end
 
+private
   def link_hosts_to_info
     {}.tap do |output|
       hosts.each_with_index do |host, index|
@@ -61,21 +80,6 @@ class ElasticsearchOutputter
       end
     end
   end
-
-  def output
-    results = convert_to_i
-    results.map do |host, entries|
-      time = entries[:at]
-      entry = {
-        :index => index,
-        :type  => "redis",
-        :body  => entries.merge({
-          :@timestamp => Time.at(time).strftime("%FT%T%:z"),
-          :host       => host
-        }),
-      }
-
-      client.index entry
-    end
-  end
 end
+end
+

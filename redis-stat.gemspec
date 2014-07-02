@@ -34,6 +34,4 @@ Gem::Specification.new do |gem|
     gem.add_runtime_dependency "thin", '~> 1.5.0'
     gem.add_runtime_dependency "daemons", '~> 1.1.9'
   end
-
-  gem.add_development_dependency 'test-unit'
 end

@@ -1,14 +1,15 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 
-require 'rubygems'
-require 'test-unit'
+$VERBOSE = true
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+require 'rubygems'
 require 'redis-stat'
 require 'redis'
 require 'stringio'
+require 'minitest/autorun'
 
-class TestRedisStat < Test::Unit::TestCase
+class TestRedisStat < MiniTest::Unit::TestCase
   def test_humanize_number
     rs = RedisStat.new
     assert_equal '0', rs.send(:humanize_number, 0.00)
@@ -102,9 +103,20 @@ class TestRedisStat < Test::Unit::TestCase
       :style => :ascii
     }.sort, options.sort)
 
+    options = RedisStat::Option.parse(%w[-h localhost:8888 10 -a password --csv=/tmp/a.csv --style=ascii --es=localhost/index])
+    assert_equal({
+      :auth => 'password',
+      :hosts => ['localhost:8888'],
+      :interval => 10,
+      :count => nil,
+      :csv => '/tmp/a.csv',
+      :style => :ascii,
+      :es => %w[http://localhost index]
+    }.sort, options.sort)
+
     # Server
     if RUBY_PLATFORM == 'java'
-      assert_raise(SystemExit) {
+      assert_raises(SystemExit) {
         RedisStat::Option.parse(%w[-h localhost:8888 10 -a password --csv=/tmp/a.csv --style=ascii --server=5555 --daemon])
       }
     else
@@ -130,16 +142,16 @@ class TestRedisStat < Test::Unit::TestCase
       %w[localhost 0],
       %w[localhost 5 0]
     ].each do |argv|
-      assert_raise(SystemExit) {
+      assert_raises(SystemExit) {
         options = RedisStat::Option.parse(argv)
       }
     end
 
-    assert_raise(SystemExit) {
+    assert_raises(SystemExit) {
       RedisStat::Option.parse(%w[--style=html])
     }
 
-    assert_raise(SystemExit) {
+    assert_raises(SystemExit) {
       RedisStat::Option.parse(%w[--daemon])
     }
   end
@@ -183,8 +195,19 @@ class TestRedisStat < Test::Unit::TestCase
     else
       raise NotImplementedError.new # FIXME
     end
-  rescue Redis::CannotConnectError, NotImplementedError 
-    pend "redises not ready"
+  rescue Redis::CannotConnectError, NotImplementedError
+    skip "redises not ready"
+  end
+
+  def test_elasticsearch_url
+    {
+      'localhost/index'         => %w[http://localhost index],
+      'https://localhost/index' => %w[https://localhost index],
+      'https://localhost'       => %w[https://localhost services],
+      'httpserver:9200/index'   => %w[http://httpserver:9200 index],
+    }.each do |arg, ret|
+      assert_equal ret, RedisStat::ElasticsearchSink.parse_url(arg)
+    end
   end
 end
 

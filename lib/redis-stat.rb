@@ -91,7 +91,7 @@ class RedisStat
             end
           end
         info_output = process info, prev_info
-        output info, info_output, csv unless @daemonized
+        output info, info_output, csv
         server.push info, Hash[info_output] if server
         prev_info = info
 
@@ -264,13 +264,13 @@ private
   end
 
   def output info, info_output, file
-    output_term info_output
+    output_term info_output unless @daemonized
     output_file info_output, file if file
-    output_es hosts, info  if @elasticsearch
+    output_es hosts, info if @elasticsearch
   end
 
   def output_es hosts, info
-    ElasticsearchOutputter.new(hosts, info, @elasticsearch).output
+    ElasticsearchSink.new(hosts, info, @elasticsearch).output
   end
 
   def init_table info_output
