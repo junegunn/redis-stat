@@ -272,6 +272,8 @@ private
 
   def output_es info
     @elasticsearch.output info
+  rescue Exception
+    raise unless @daemonized
   end
 
   def init_table info_output
