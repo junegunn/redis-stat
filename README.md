@@ -26,6 +26,7 @@ usage: redis-stat [HOST[:PORT] ...] [INTERVAL [COUNT]]
         --style=STYLE                Output style: unicode|ascii
         --no-color                   Suppress ANSI color codes
         --csv=OUTPUT_CSV_FILE_PATH   Save the result in CSV format
+        --es=ELASTICSEARCH_URL       Send results to Elasticsearch
 
         --server[=PORT]              Launch redis-stat web server (default port: 63790)
         --daemon                     Daemonize redis-stat. Must be used with --server option.
