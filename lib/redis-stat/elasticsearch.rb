@@ -16,7 +16,7 @@ class ElasticsearchSink
     :rdb_last_save_time      => true,
   }
 
-  DEFAULT_INDEX = "services"
+  DEFAULT_INDEX = 'redis-stat'
 
   def self.parse_url elasticsearch
     unless elasticsearch.match(%r[^https?://])
