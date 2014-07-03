@@ -203,7 +203,7 @@ class TestRedisStat < MiniTest::Unit::TestCase
     {
       'localhost/index'         => %w[http://localhost index],
       'https://localhost/index' => %w[https://localhost index],
-      'https://localhost'       => %w[https://localhost services],
+      'https://localhost'       => %w[https://localhost redis-stat],
       'httpserver:9200/index'   => %w[http://httpserver:9200 index],
     }.each do |arg, ret|
       assert_equal ret, RedisStat::ElasticsearchSink.parse_url(arg)
