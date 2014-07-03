@@ -31,15 +31,14 @@ class ElasticsearchSink
     [uri.to_s, index]
   end
 
-  def initialize hosts, info, elasticsearch
+  def initialize hosts, elasticsearch
     url, @index  = elasticsearch
     @hosts       = hosts
-    @info        = info
     @client      = Elasticsearch::Client.new :url => url
   end
 
-  def output
-    results = convert_to_i
+  def output info
+    results = convert_to_i info
     results.map do |host, entries|
       time = entries[:at]
       entry = {
@@ -56,7 +55,7 @@ class ElasticsearchSink
   end
 
 private
-  def link_hosts_to_info
+  def link_hosts_to_info info
     {}.tap do |output|
       hosts.each_with_index do |host, index|
         output[host] = {}.tap do |host_output|
@@ -69,8 +68,8 @@ private
     end
   end
 
-  def convert_to_i
-    info = link_hosts_to_info
+  def convert_to_i info
+    info = link_hosts_to_info info
     info.each do |host, entries|
       entries.each do |name, value|
         convert = RedisStat::LABELS[name] || TO_I[name]

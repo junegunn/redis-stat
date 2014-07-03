@@ -46,7 +46,7 @@ class RedisStat
     @server_port   = options[:server_port]
     @server_thr    = nil
     @daemonized    = options[:daemon]
-    @elasticsearch = options[:es]
+    @elasticsearch = options[:es] && ElasticsearchSink.new(@hosts, options[:es])
   end
 
   def info
@@ -107,6 +107,7 @@ class RedisStat
         @server_thr.join
       end
     rescue Exception => e
+      @os.puts
       @os.puts e.to_s.red.bold
       raise
     ensure
@@ -264,13 +265,13 @@ private
   end
 
   def output info, info_output, file
-    output_term info_output unless @daemonized
+    output_term info_output       unless @daemonized
     output_file info_output, file if file
-    output_es hosts, info if @elasticsearch
+    output_es   info              if @elasticsearch
   end
 
-  def output_es hosts, info
-    ElasticsearchSink.new(hosts, info, @elasticsearch).output
+  def output_es info
+    @elasticsearch.output info
   end
 
   def init_table info_output
