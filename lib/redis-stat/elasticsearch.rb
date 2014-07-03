@@ -35,7 +35,7 @@ class ElasticsearchSink
     url, @index  = elasticsearch
     @hosts       = hosts
     @info        = info
-    @client      = Elasticsearch::Client.new url: url
+    @client      = Elasticsearch::Client.new :url => url
   end
 
   def output
