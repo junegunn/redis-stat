@@ -101,9 +101,9 @@
               <tbody>
                 <% @tab_measures.each do |stat| %>
                 <tr id="<%= stat %>">
-                  <% @hosts.each_with_index do |host, idx| %>
+                  <% @hosts.each do |host| %>
                   <td>
-                    <%= @info[stat][idx] %>
+                    <%= @info[:instances][host][stat] %>
                   </td>
                   <% end %>
                 </tr>

@@ -26,9 +26,10 @@ class RedisStat
     options[:style] = :ascii if windows
 
     @hosts         = options[:hosts]
-    @redises       = @hosts.map { |e|
+    @redises       = @hosts.inject({}) { |hash, e|
       host, port   = e.split(':')
-      Redis.new(Hash[ {:host => host, :port => port, :timeout => DEFAULT_REDIS_TIMEOUT}.select { |k, v| v } ])
+      hash[e] = Redis.new(Hash[ {:host => host, :port => port, :timeout => DEFAULT_REDIS_TIMEOUT}.select { |k, v| v } ])
+      hash
     }
     @interval      = options[:interval]
     @max_count     = options[:count]
@@ -49,10 +50,6 @@ class RedisStat
     @elasticsearch = options[:es] && ElasticsearchSink.new(@hosts, options[:es])
   end
 
-  def info
-    collect
-  end
-
   def start output_stream
     @os = output_stream
     trap('INT') { Thread.main.raise Interrupt }
@@ -65,37 +62,41 @@ class RedisStat
       @started_at = Time.now
       prev_info   = nil
       server      = start_server if @server_port
+      errors      = 0
 
       LPS.interval(@interval).loop do
-        errs = 0
-        info =
+        info, exceptions =
           begin
             collect
           rescue Interrupt
             raise
-          rescue Exception => e
-            if need_auth?(e)
-              authenticate!
-              retry
-            end
-
-            errs += 1
-            if server || errs < NUM_RETRIES
-              @os.puts if errs == 1
-              @os.puts "#{e} (#{ server ? "#{errs}" : [errs, NUM_RETRIES].join('/') })".red.bold
-              server.alert "#{e} (#{errs})" if server
-              sleep @interval
-              retry
-            else
-              raise
-            end
           end
+
+        if exceptions.any? { |k, v| need_auth? v }
+          authenticate!
+          next
+        end
+
+        output_es info if @elasticsearch
+
+        unless exceptions.empty?
+          now = Time.now.strftime('%Y/%m/%d %H:%M:%S')
+          msgs = exceptions.map { |h, x| "[#{now}@#{h}] #{x}" }
+          @os.puts if (errors += 1) == 1
+          @os.puts msgs.join($/).red.bold
+          server.alert msgs.first if server
+          sleep @interval
+          next
+        end
+
         info_output = process info, prev_info
-        output info, info_output, csv
-        server.push info, Hash[info_output] if server
+        output_static_info info if @count == 0
+        output info_output, csv
+        server.push @hosts, info, Hash[info_output] if server
         prev_info = info
 
         @count += 1
+        errors = 0
         break if @max_count && @count >= @max_count
       end
       @os.puts
@@ -107,7 +108,6 @@ class RedisStat
         @server_thr.join
       end
     rescue Exception => e
-      @os.puts
       @os.puts e.to_s.red.bold
       raise
     ensure
@@ -120,7 +120,7 @@ private
   def start_server
     RedisStat::Server.set :port, @server_port
     RedisStat::Server.set :redis_stat, self
-    RedisStat::Server.set :last_info, info
+    RedisStat::Server.set :last_info, collect.first
     @server_thr = Thread.new { RedisStat::Server.run! }
     RedisStat::Server.wait_until_running
     trap('INT') { Thread.main.raise Interrupt }
@@ -128,26 +128,36 @@ private
   end
 
   def collect
-    {}.insensitive.tap do |info|
-      class << info
-        def sumf label
-          (self[label] || []).map(&:to_f).inject(:+)
-        end
+    info = {
+      :at => Time.now.to_f,
+      :instances => Hash.new { |h, k| h[k] = {}.insensitive }
+    }
+    class << info
+      def sumf label
+        self[:instances].values.map { |hash| hash[label].to_f }.inject(:+)
       end
+    end
+    exceptions = {}
 
-      info[:at] = Time.now.to_f
-      @redises.pmap(@redises.length) { |redis|
-        redis.info.insensitive
-      }.each do |rinfo|
+    @hosts.pmap(@hosts.length) { |host|
+      begin
+        [host, @redises[host].info.insensitive]
+      rescue Exception => e
+        [host, e]
+      end
+    }.each do |host, rinfo|
+      if rinfo.is_a?(Exception)
+        exceptions[host] = rinfo
+      else
         (@all_measures + rinfo.keys.select { |k| k =~ /^db[0-9]+$/ }).each do |k|
           ks = [*k]
           v = ks.map { |e| rinfo[e] }.compact.first
           k = ks.first
-          info[k] ||= []
-          info[k] << v
+          info[:instances][host][k] = v
         end
       end
     end
+    [info, exceptions]
   end
 
   def update_term_size!
@@ -204,8 +214,6 @@ private
 
     movement = nil
     if @count == 0
-      output_static_info info
-
       movement = 0
     elsif @count % @term_height == 0
       @first_batch = false
@@ -259,15 +267,14 @@ private
     tab << [nil] + @hosts.map { |h| h.bold.green }
     tab.separator!
     @tab_measures.each do |key|
-      tab << [key.to_s.bold] + info[key] unless info[key].compact.empty?
+      tab << [key.to_s.bold] + @hosts.map { |host| info[:instances][host][key] }
     end
     @os.puts tab
   end
 
-  def output info, info_output, file
-    output_term info_output       unless @daemonized
+  def output info_output, file
+    output_term info_output unless @daemonized
     output_file info_output, file if file
-    output_es   info              if @elasticsearch
   end
 
   def output_es info
@@ -380,7 +387,7 @@ private
   end
 
   def authenticate!
-    @redises.each do |r|
+    @redises.values.each do |r|
       r.ping rescue (r.auth @auth)
     end if @auth
   end

@@ -4,8 +4,6 @@ class RedisStat
   DEFAULT_SERVER_PORT   = 63790
   DEFAULT_REDIS_TIMEOUT = 30
 
-  NUM_RETRIES = 5
-
   MEASURES = {
     :static => [
       :redis_version,

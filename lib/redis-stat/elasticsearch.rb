@@ -38,8 +38,7 @@ class ElasticsearchSink
   end
 
   def output info
-    results = convert_to_i info
-    results.map do |host, entries|
+    convert_to_i(info).map do |host, entries|
       time = entries[:at]
       entry = {
         :index => index,
@@ -55,29 +54,18 @@ class ElasticsearchSink
   end
 
 private
-  def link_hosts_to_info info
-    {}.tap do |output|
-      hosts.each_with_index do |host, index|
-        output[host] = {}.tap do |host_output|
-          info.each do |name, entries|
-            value = name == :at ? entries : entries[index]
-            host_output[name] = value
-          end
-        end
-      end
-    end
-  end
-
   def convert_to_i info
-    info = link_hosts_to_info info
-    info.each do |host, entries|
+    Hash[info[:instances].map { |host, entries|
+      output = {}
+      output[:at] = info[:at].to_i
       entries.each do |name, value|
         convert = RedisStat::LABELS[name] || TO_I[name]
         if convert
-          entries[name] = value.to_i
+          output[name] = value.to_i
         end
       end
-    end
+      [host, output]
+    }]
   end
 end
 end

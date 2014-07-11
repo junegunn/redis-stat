@@ -83,9 +83,9 @@ class Server < Sinatra::Base
       end
     end
 
-    def push info, data
+    def push hosts, info, data
       static = Hash[settings.redis_stat.tab_measures.map { |stat|
-        [stat, info[stat]]
+        [stat, hosts.map { |h| info[:instances][h][stat] }]
       }]
       data = {:at => (Time.now.to_f * 1000).to_i, :static => static, :dynamic => data}
 
