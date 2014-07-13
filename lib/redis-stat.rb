@@ -253,7 +253,7 @@ private
       @os.print $/ + lines.join($/)
       @os.flush
     rescue Interrupt
-      move! -movement
+      move!(-movement)
       raise
     end
   end

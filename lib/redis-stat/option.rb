@@ -14,7 +14,7 @@ module Option
     argv = argv.reject { |e| e == '-h' }
 
     options = DEFAULT.dup
-    opts = ::OptionParser.new { |opts|
+    op = ::OptionParser.new { |opts|
       opts.banner = "usage: redis-stat [HOST[:PORT] ...] [INTERVAL [COUNT]]"
       opts.separator ''
 
@@ -69,7 +69,7 @@ module Option
     }
 
     begin
-      opts.parse! argv
+      op.parse! argv
 
       is_number   = lambda { |str| str =~ /^([0-9]\.?[0-9]*)$|^([1-9][0-9]*)$/ }
 
@@ -87,7 +87,7 @@ module Option
       exit e.status
     rescue Exception => e
       puts e.to_s
-      puts opts
+      puts op
       exit 1
     end
   end
