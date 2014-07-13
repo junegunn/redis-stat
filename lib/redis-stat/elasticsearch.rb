@@ -44,7 +44,7 @@ class ElasticsearchSink
         :index => index,
         :type  => "redis",
         :body  => entries.merge({
-          :@timestamp => Time.at(time).strftime("%FT%T%:z"),
+          :@timestamp => format_time(time),
           :host       => host
         }),
       }
@@ -54,6 +54,17 @@ class ElasticsearchSink
   end
 
 private
+  if RUBY_VERSION.start_with? '1.8.'
+    def format_time time
+      fmt = Time.at(time).strftime("%FT%T%z")
+      fmt[0..-3] + ':' + fmt[-2..-1]
+    end
+  else
+    def format_time time
+      Time.at(time).strftime("%FT%T%:z")
+    end
+  end
+
   def convert_to_i info
     Hash[info[:instances].map { |host, entries|
       output = {}
