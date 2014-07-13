@@ -14,6 +14,7 @@ require 'parallelize'
 require 'si'
 require 'rbconfig'
 require 'lps'
+require 'readline'
 
 class RedisStat
   attr_reader :hosts, :measures, :tab_measures, :verbose, :interval
@@ -164,19 +165,11 @@ private
     if RUBY_PLATFORM == 'java'
       require 'java'
       begin
-        case JRUBY_VERSION
-        when /^1\.7/
-          # TODO Currently Windows terminal is not supported: always returns 80x24
-          @term ||= Java::jline.console.ConsoleReader.new.getTerminal
-          @term_width  = (@term.width rescue DEFAULT_TERM_WIDTH)
-          @term_height = (@term.height rescue DEFAULT_TERM_HEIGHT) - 4
-          return
-        when /^1\.6/
-          @term ||= Java::jline.ConsoleReader.new.getTerminal
-          @term_width  = (@term.getTerminalWidth rescue DEFAULT_TERM_WIDTH)
-          @term_height = (@term.getTerminalHeight rescue DEFAULT_TERM_HEIGHT) - 4
-          return
-        end
+        @term ||= (Java::jline.console.ConsoleReader.new.getTerminal) rescue
+                  (Java::jline.ConsoleReader.new.getTerminal)
+        @term_width  = (@term.width rescue DEFAULT_TERM_WIDTH)
+        @term_height = (@term.height rescue DEFAULT_TERM_HEIGHT) - 4
+        return
       rescue Exception
         # Fallback to tput (which yields incorrect values as of now)
       end
