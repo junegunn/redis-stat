@@ -27,7 +27,6 @@
         <div class="span12">
           <h3>Dashboard</h3>
           <div class="alert alert-error hide">
-            <h4></h4>
           </div>
         </div>
       </div>
@@ -142,20 +141,27 @@
 
         var source = new EventSource("/pull")
         source.onmessage = function(e) {
+          var alert = $(".alert");
           var json = JSON.parse(e.data);
-          if (json.error) {
-            $(".alert h4").text(json.error);
-            $(".alert").fadeIn();
-          } else if (appendToHistory(json)) {
-            $(".alert").fadeOut()
+          if (json.error && json.error.length > 0) {
+            alert.html(
+              $.map(json.error, function(e, _) {
+                return "<h4>" + e + "</h4>";
+              }).join(''));
+            alert.fadeIn();
+          } else {
+            alert.fadeOut();
+          }
+          if (appendToHistory(json)) {
             updateTable()
             updatePlot()
           }
         }
         <% unless RUBY_PLATFORM == 'java' %>
         source.onerror = function(e) {
-          $(".alert h4").text("Lost connection to redis-stat");
-          $(".alert").fadeIn();
+          var alert = $(".alert");
+          alert.html("<h4>Lost connection to redis-stat</h4>");
+          alert.fadeIn();
           // source.close()
         }
         <% end %>

@@ -61,8 +61,13 @@ class RedisStat
       authenticate!
 
       @started_at = Time.now
-      prev_info   = nil
-      server      = start_server if @server_port
+      info, x     = collect
+      unless x.empty?
+        output_term_errors! format_exceptions(x)
+        exit 1
+      end
+      prev_info   = info
+      server      = start_server(info) if @server_port
       errors      = 0
 
       LPS.interval(@interval).loop do
@@ -78,22 +83,16 @@ class RedisStat
           next
         end
 
+        error_messages = format_exceptions(exceptions)
+        info_output = process info, prev_info
+        unless @daemonized
+          output_static_info info if @count == 0
+          output_term info_output, error_messages
+        end
+        server.push @hosts, info, Hash[info_output], error_messages if server
+        output_file info_output, csv if csv
         output_es info if @elasticsearch
 
-        unless exceptions.empty?
-          now = Time.now.strftime('%Y/%m/%d %H:%M:%S')
-          msgs = exceptions.map { |h, x| "[#{now}@#{h}] #{x}" }
-          @os.puts if (errors += 1) == 1
-          @os.puts msgs.join($/).red.bold
-          server.alert msgs.first if server
-          sleep @interval
-          next
-        end
-
-        info_output = process info, prev_info
-        output_static_info info if @count == 0
-        output info_output, csv
-        server.push @hosts, info, Hash[info_output] if server
         prev_info = info
 
         @count += 1
@@ -108,6 +107,8 @@ class RedisStat
         @server_thr.raise Interrupt
         @server_thr.join
       end
+    rescue SystemExit
+      raise
     rescue Exception => e
       @os.puts e.to_s.red.bold
       raise
@@ -118,11 +119,16 @@ class RedisStat
   end
 
 private
-  def start_server
+  def start_server info
     RedisStat::Server.set :port, @server_port
     RedisStat::Server.set :redis_stat, self
-    RedisStat::Server.set :last_info, collect.first
-    @server_thr = Thread.new { RedisStat::Server.run! }
+    RedisStat::Server.set :last_info, info
+    @server_thr = Thread.new {
+      begin
+        RedisStat::Server.run!
+      rescue Interrupt
+      end
+    }
     RedisStat::Server.wait_until_running
     trap('INT') { Thread.main.raise Interrupt }
     RedisStat::Server
@@ -135,7 +141,7 @@ private
     }
     class << info
       def sumf label
-        self[:instances].values.map { |hash| hash[label].to_f }.inject(:+)
+        self[:instances].values.map { |hash| hash[label].to_f }.inject(:+) || 0
       end
     end
     exceptions = {}
@@ -191,7 +197,16 @@ private
     )
   end
 
-  def output_file info_output, file
+  def format_exceptions exceptions
+    if exceptions.empty?
+      []
+    else
+      now = Time.now.strftime('%Y/%m/%d %H:%M:%S')
+      exceptions.map { |h, x| "[#{now}@#{h}] #{x}" }
+    end
+  end
+
+  def output_file info_output, file, error_messages
     file.puts CSV.generate_line(info_output.map { |pair|
       LABELS[pair.first] || pair.first
     }) if @count == 0
@@ -202,7 +217,26 @@ private
     file.flush
   end
 
-  def output_term info_output
+  def output_term_errors error_messages
+    @_term_error_reported ||= false
+    if error_messages.empty?
+      @_term_error_reported = false
+    else
+      unless @_term_error_reported
+        @os.puts
+      end
+      output_term_errors! error_messages
+      @_term_error_reported = true
+    end
+  end
+
+  def output_term_errors! error_messages
+    @os.puts error_messages.join($/).red.bold
+  end
+
+  def output_term info_output, error_messages
+    return if output_term_errors error_messages
+
     @table ||= init_table info_output
 
     movement = nil
@@ -263,11 +297,6 @@ private
       tab << [key.to_s.bold] + @hosts.map { |host| info[:instances][host][key] }
     end
     @os.puts tab
-  end
-
-  def output info_output, file
-    output_term info_output unless @daemonized
-    output_file info_output, file if file
   end
 
   def output_es info

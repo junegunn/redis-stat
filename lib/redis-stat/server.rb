@@ -83,11 +83,14 @@ class Server < Sinatra::Base
       end
     end
 
-    def push hosts, info, data
+    def push hosts, info, data, error
       static = Hash[settings.redis_stat.tab_measures.map { |stat|
         [stat, hosts.map { |h| info[:instances][h][stat] }]
       }]
-      data = {:at => (Time.now.to_f * 1000).to_i, :static => static, :dynamic => data}
+      data = {:at      => (Time.now.to_f * 1000).to_i,
+              :static  => static,
+              :dynamic => data,
+              :error   => error}
 
       settings.mutex.synchronize do
         settings.last_error = nil

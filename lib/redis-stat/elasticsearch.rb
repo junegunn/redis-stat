@@ -38,14 +38,15 @@ class ElasticsearchSink
   end
 
   def output info
-    convert_to_i(info).map do |host, entries|
-      time = entries[:at]
+    convert_to_i(info).each do |host, entries|
+      time = info[:at].to_i
       entry = {
         :index => index,
         :type  => "redis",
         :body  => entries.merge({
           :@timestamp => format_time(time),
-          :host       => host
+          :host       => host,
+          :at         => time
         }),
       }
 
@@ -68,15 +69,14 @@ private
   def convert_to_i info
     Hash[info[:instances].map { |host, entries|
       output = {}
-      output[:at] = info[:at].to_i
       entries.each do |name, value|
         convert = RedisStat::LABELS[name] || TO_I[name]
         if convert
           output[name] = value.to_i
         end
       end
-      [host, output]
-    }]
+      output.empty? ? nil : [host, output]
+    }.compact]
   end
 end
 end
