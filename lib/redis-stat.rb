@@ -206,7 +206,7 @@ private
     end
   end
 
-  def output_file info_output, file, error_messages
+  def output_file info_output, file
     file.puts CSV.generate_line(info_output.map { |pair|
       LABELS[pair.first] || pair.first
     }) if @count == 0
