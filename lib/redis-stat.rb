@@ -52,6 +52,7 @@ class RedisStat
   end
 
   def start output_stream
+    @started_at = Time.now
     @os = output_stream
     trap('INT') { Thread.main.raise Interrupt }
 
@@ -60,16 +61,28 @@ class RedisStat
       update_term_size!
       authenticate!
 
-      @started_at = Time.now
-      info, x     = collect
+      # Initial info collection
+      info, x = collect
       unless x.empty?
         output_term_errors! format_exceptions(x)
         exit 1
       end
-      prev_info   = info
-      server      = start_server(info) if @server_port
-      errors      = 0
 
+      # Check elasticsearch status
+      if @elasticsearch
+        begin
+          output_es info
+        rescue Exception => e
+          output_term_errors! format_exceptions({ :elasticsearch => e })
+          exit 1
+        end
+      end
+
+      # Start web servers
+      server = start_server(info) if @server_port
+
+      # Main loop
+      prev_info = nil
       LPS.interval(@interval).loop do
         info, exceptions =
           begin
@@ -83,6 +96,11 @@ class RedisStat
           next
         end
 
+        begin
+          output_es info if @elasticsearch && @count > 0
+        rescue Exception => e
+          exceptions[:elasticsearch] = e.to_s
+        end
         error_messages = format_exceptions(exceptions)
         info_output = process info, prev_info
         unless @daemonized
@@ -91,12 +109,10 @@ class RedisStat
         end
         server.push @hosts, info, Hash[info_output], error_messages if server
         output_file info_output, csv if csv
-        output_es info if @elasticsearch
 
         prev_info = info
 
         @count += 1
-        errors = 0
         break if @max_count && @count >= @max_count
       end
       @os.puts
