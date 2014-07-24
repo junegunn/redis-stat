@@ -6,16 +6,6 @@ class RedisStat
 class ElasticsearchSink
   attr_reader :hosts, :info, :index, :client
 
-  TO_I = {
-    :process_id              => true,
-    :uptime_in_seconds       => true,
-    :uptime_in_days          => true,
-    :connected_slaves        => true,
-    :aof_enabled             => true,
-    :rdb_bgsave_in_progress  => true,
-    :rdb_last_save_time      => true,
-  }
-
   DEFAULT_INDEX = 'redis-stat'
 
   def self.parse_url elasticsearch
@@ -38,15 +28,22 @@ class ElasticsearchSink
   end
 
   def output info
-    convert_to_i(info).each do |host, entries|
-      time = info[:at].to_i
+    @hosts.each do |host|
+      entries = Hash[info.map { |k, v|
+        if v.has_key?(host) && raw = v[host].last
+          [k, raw]
+        end
+      }.compact]
+      next if entries.empty?
+
+      time = entries[:at]
       entry = {
         :index => index,
         :type  => "redis",
         :body  => entries.merge({
           :@timestamp => format_time(time),
           :host       => host,
-          :at         => time
+          :at         => time.to_f
         }),
       }
 
@@ -57,26 +54,13 @@ class ElasticsearchSink
 private
   if RUBY_VERSION.start_with? '1.8.'
     def format_time time
-      fmt = Time.at(time).strftime("%FT%T%z")
+      fmt = time.strftime("%FT%T%z")
       fmt[0..-3] + ':' + fmt[-2..-1]
     end
   else
     def format_time time
-      Time.at(time).strftime("%FT%T%:z")
+      time.strftime("%FT%T%:z")
     end
-  end
-
-  def convert_to_i info
-    Hash[info[:instances].map { |host, entries|
-      output = {}
-      entries.each do |name, value|
-        convert = RedisStat::LABELS[name] || TO_I[name]
-        if convert
-          output[name] = value.to_i
-        end
-      end
-      output.empty? ? nil : [host, output]
-    }.compact]
   end
 end
 end

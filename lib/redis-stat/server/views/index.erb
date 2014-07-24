@@ -102,7 +102,7 @@
                 <tr id="<%= stat %>">
                   <% @hosts.each do |host| %>
                   <td>
-                    <%= @info[:instances][host][stat] %>
+                    <%= @info[host][stat] %>
                   </td>
                   <% end %>
                 </tr>

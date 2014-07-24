@@ -40,7 +40,7 @@ class RedisStat
     @verbose       = options[:verbose]
     @measures      = MEASURES[ @verbose ? :verbose : :default ].map { |m| [*m].first }
     @tab_measures  = MEASURES[:static].map { |m| [*m].first }
-    @all_measures  = MEASURES.values.inject(:+).uniq - [:at]
+    @all_measures  = TYPES.keys
     @count         = 0
     @style         = options[:style]
     @varwidth      = STDOUT.tty? && !windows
@@ -71,7 +71,7 @@ class RedisStat
       # Check elasticsearch status
       if @elasticsearch
         begin
-          output_es info
+          output_es Hash[process(info, nil)]
         rescue Exception => e
           output_term_errors! format_exceptions({ :elasticsearch => e })
           exit 1
@@ -96,13 +96,14 @@ class RedisStat
           next
         end
 
+        info_output_all = process info, prev_info
         begin
-          output_es info if @elasticsearch && @count > 0
+          output_es Hash[info_output_all] if @elasticsearch && @count > 0
         rescue Exception => e
           exceptions[:elasticsearch] = e.to_s
         end
         error_messages = format_exceptions(exceptions)
-        info_output = process info, prev_info
+        info_output = @measures.map { |key| [key, info_output_all[key][:sum]] }
         unless @daemonized
           output_static_info info if @count == 0
           output_term info_output, error_messages
@@ -150,21 +151,43 @@ private
     RedisStat::Server
   end
 
-  def collect
-    info = {
-      :at => Time.now.to_f,
-      :instances => Hash.new { |h, k| h[k] = {}.insensitive }
-    }
-    class << info
-      def sumf label
-        self[:instances].values.map { |hash| hash[label].to_f }.inject(:+) || 0
-      end
+  module ExtendedHash
+    def hosts host
+      host == :sum ? self.values : [self[host]]
     end
+
+    def vals host, label
+      hosts(host).map { |hash| hash[label] }
+    end
+
+    def s host, label
+      hosts(host).map { |hash| hash[label] }.join('/')
+    end
+
+    def i host, label
+      f(host, label).to_i
+    end
+
+    def f host, label
+      hosts(host).map { |hash|
+        case label
+        when Proc
+          label.call(hash)
+        else
+          hash[label].to_f
+        end
+      }.inject(:+) || 0
+    end
+  end
+
+  def collect
+    info = Hash.new { |h, k| h[k] = {}.insensitive }.extend(ExtendedHash)
     exceptions = {}
 
     @hosts.pmap(@hosts.length) { |host|
       begin
-        [host, @redises[host].info.insensitive]
+        hash = { :at => Time.now }.insensitive
+        [host, hash.merge(@redises[host].info)]
       rescue Exception => e
         [host, e]
       end
@@ -176,7 +199,7 @@ private
           ks = [*k]
           v = ks.map { |e| rinfo[e] }.compact.first
           k = ks.first
-          info[:instances][host][k] = v
+          info[host][k] = v
         end
       end
     end
@@ -228,7 +251,12 @@ private
     }) if @count == 0
 
     file.puts CSV.generate_line(info_output.map { |pair|
-      [*pair.last].last
+      case val = [*pair.last].last
+      when Time
+        val.to_f
+      else
+        val
+      end
     })
     file.flush
   end
@@ -310,7 +338,7 @@ private
     tab << [nil] + @hosts.map { |h| h.bold.green }
     tab.separator!
     @tab_measures.each do |key|
-      tab << [key.to_s.bold] + @hosts.map { |host| info[:instances][host][key] }
+      tab << [key.to_s.bold] + @hosts.map { |host| info[host][key] }
     end
     @os.puts tab
   end
@@ -341,18 +369,27 @@ private
   end
 
   def process info, prev_info
-    @measures.map { |key|
-      # [ key, [humanized, raw] ]
-      [ key, process_how(info, prev_info, key) ]
-    }.select { |pair| pair.last }
+    hosts = [:sum].concat(@hosts)
+    Hash[@all_measures.map { |key|
+      [ key,
+        hosts.select { |h| info.has_key?(h) || h == :sum }.inject({}) { |sum, h|
+          sum[h] = process_how(h, info, prev_info, key)
+          sum
+        }
+      ]
+    }]
   end
 
-  def process_how info, prev_info, key
-    dur = prev_info && (info[:at] - prev_info[:at])
+  def process_how host, info, prev_info, key
+    dur = prev_info && begin
+      max = info.vals(host, :at).compact.max
+      min = prev_info.vals(host, :at).compact.min
+      max && min && (max - min)
+    end
 
     get_diff = lambda do |label|
       if dur && dur > 0
-        (info.sumf(label) - prev_info.sumf(label)) / dur
+        (info.f(host, label) - prev_info.f(host, label)) / dur
       else
         nil
       end
@@ -360,29 +397,29 @@ private
 
     case key
     when :at
-      val = Time.now.strftime('%H:%M:%S')
-      [val, val]
+      now = info.vals(host, :at).compact.max || Time.now
+      [now.strftime('%H:%M:%S'), now]
     when :used_cpu_user, :used_cpu_sys
       val = get_diff.call(key)
       val &&= (val * 100).round
       [humanize_number(val), val]
     when :keys
-      val = info[:instances].values.map { |hash|
-        Hash[hash.select { |k, _| k =~ /^db[0-9]+$/ }].values.map { |v|
-          Hash[ v.split(',').map { |e| e.split '=' } ]['keys'].to_i
+      val = info.f(host, proc { |hash|
+        Hash[ hash.select { |k, v| k =~ /^db[0-9]+$/ } ].values.inject(0) { |sum, vs|
+          sum + Hash[ vs.split(',').map { |e| e.split '=' } ]['keys'].to_i
         }
-      }.flatten.inject(:+) || 0
+      })
       [humanize_number(val), val]
     when :evicted_keys_per_second, :expired_keys_per_second, :keyspace_hits_per_second,
          :keyspace_misses_per_second, :total_commands_processed_per_second
       val = get_diff.call(key.to_s.gsub(/_per_second$/, '').to_sym)
       [humanize_number(val), val]
     when :used_memory, :used_memory_rss, :aof_current_size, :aof_base_size
-      val = info.sumf(key)
+      val = info.f(host, key)
       [humanize_number(val.to_i, true), val]
     when :keyspace_hit_ratio
-      hits = info.sumf(:keyspace_hits)
-      misses = info.sumf(:keyspace_misses)
+      hits = info.f(host, :keyspace_hits)
+      misses = info.f(host, :keyspace_misses)
       val = ratio(hits, misses)
       [humanize_number(val), val]
     when :keyspace_hit_ratio_per_second
@@ -391,8 +428,10 @@ private
       val = ratio(hits, misses)
       [humanize_number(val), val]
     else
-      val = info.sumf(key)
-      [humanize_number(val), val]
+      conv = TYPES.fetch key, :s
+      val = info.send(conv, host, key)
+      val.is_a?(String) ?
+        [val, val] : [humanize_number(val), val]
     end
   end
 
