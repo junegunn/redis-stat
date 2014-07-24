@@ -367,9 +367,11 @@ private
       val &&= (val * 100).round
       [humanize_number(val), val]
     when :keys
-      val = Hash[ info.select { |k, v| k =~ /^db[0-9]+$/ } ].values.inject(0) { |sum, vs|
-        sum + vs.map { |v| Hash[ v.split(',').map { |e| e.split '=' } ]['keys'].to_i }.inject(:+)
-      }
+      val = info[:instances].values.map { |hash|
+        Hash[hash.select { |k, _| k =~ /^db[0-9]+$/ }].values.map { |v|
+          Hash[ v.split(',').map { |e| e.split '=' } ]['keys'].to_i
+        }
+      }.flatten.inject(:+) || 0
       [humanize_number(val), val]
     when :evicted_keys_per_second, :expired_keys_per_second, :keyspace_hits_per_second,
          :keyspace_misses_per_second, :total_commands_processed_per_second
