@@ -99,6 +99,8 @@ class RedisStat
         info_output_all = process info, prev_info
         begin
           output_es Hash[info_output_all] if @elasticsearch && @count > 0
+        rescue Interrupt
+          raise
         rescue Exception => e
           exceptions[:elasticsearch] = e.to_s
         end
