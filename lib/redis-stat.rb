@@ -391,7 +391,7 @@ private
 
     get_diff = lambda do |label|
       if dur && dur > 0
-        (info.f(host, label) - prev_info.f(host, label)) / dur
+        [(info.f(host, label) - prev_info.f(host, label)) / dur, 0].max
       else
         nil
       end
