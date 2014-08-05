@@ -27,12 +27,14 @@ class RedisStat
     options[:style] = :ascii if windows
 
     @hosts         = options[:hosts]
+    @interval      = options[:interval]
     @redises       = @hosts.inject({}) { |hash, e|
       host, port   = e.split(':')
-      hash[e] = Redis.new(Hash[ {:host => host, :port => port, :timeout => DEFAULT_REDIS_TIMEOUT}.select { |k, v| v } ])
+      hash[e] = Redis.new(Hash[ {:host => host,
+                                 :port => port,
+                                 :timeout => @interval}.select { |k, v| v } ])
       hash
     }
-    @interval      = options[:interval]
     @max_count     = options[:count]
     @colors        = options[:colors] || COLORS
     @csv           = options[:csv]
