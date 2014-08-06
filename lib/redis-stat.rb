@@ -182,6 +182,15 @@ private
         end
       }.inject(:+) || 0
     end
+
+    def sub host, label, other
+      case host
+      when :sum
+        keys.inject(0) { |sum, h| sum + sub(h, label, other) }
+      else
+        other[host].empty? ? 0 : (f(host, label) - other.f(host, label))
+      end
+    end
   end
 
   def collect
@@ -393,7 +402,7 @@ private
 
     get_diff = lambda do |label|
       if dur && dur > 0
-        [(info.f(host, label) - prev_info.f(host, label)) / dur, 0].max
+        [info.sub(host, label, prev_info) / dur, 0].max
       else
         nil
       end
