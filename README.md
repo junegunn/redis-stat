@@ -16,6 +16,10 @@ _redis-stat_ allows you to monitor Redis instances
 gem install redis-stat
 ```
 
+If you have trouble setting up a Ruby environment, you can [download the
+executable JAR file](https://github.com/junegunn/redis-stat/releases) and use
+it instead.
+
 ## Usage
 
 ```
