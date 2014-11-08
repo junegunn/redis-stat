@@ -112,7 +112,7 @@ class RedisStat
           output_static_info info if @count == 0
           output_term info_output, error_messages
         end
-        server.push @hosts, info, Hash[info_output], error_messages if server
+        server.push @hosts, info, info_output_all, error_messages if server
         output_file info_output, csv if csv
 
         prev_info = info

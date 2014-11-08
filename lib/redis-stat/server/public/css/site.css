@@ -93,3 +93,7 @@ body {
 .scrollable {
   overflow: auto;
 }
+
+.selected {
+  background-color: #ff9;
+}

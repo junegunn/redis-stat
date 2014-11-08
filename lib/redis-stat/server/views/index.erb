@@ -18,6 +18,13 @@
       <div class="navbar-inner">
         <div class="container">
           <a class="brand" href="/">redis-stat</a>
+          <% if @selected %>
+            <ul class="nav">
+              <li>
+              <a href="#"><%= @selected %></a>
+              </li>
+            </ul>
+          <% end %>
         </div>
       </div>
     </div>
@@ -93,7 +100,9 @@
               <thead>
                 <tr>
                   <% @hosts.each do |host| %>
-                    <th class="text-info"><%= host %></th>
+                    <th class="text-info<%= ' selected' if host == @selected %>">
+                      <a href="?host=<%= host %>"><%= host %>
+                    </th>
                   <% end %>
                 </tr>
               </thead>
@@ -128,6 +137,7 @@
     <script>
       $(function() {
         initialize({
+          selected: <%= @selected.to_json %>,
           measures: <%= @measures.to_json %>,
           colors:   <%= Hash[@measures.map { |m| [m, RedisStat::COLORS[m].join(' ')] }].to_json %>,
           history:  <%= @history.to_json %>,
