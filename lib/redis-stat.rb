@@ -149,6 +149,7 @@ private
         RedisStat::Server.run!
       rescue Interrupt
       end
+      Thread.main.raise Interrupt
     }
     RedisStat::Server.wait_until_running
     trap('INT') { Thread.main.raise Interrupt }
