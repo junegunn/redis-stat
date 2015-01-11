@@ -24,7 +24,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency "parallelize", '~> 0.4.0'
   gem.add_runtime_dependency "si", '~> 0.1.4'
   gem.add_runtime_dependency "sinatra", '~> 1.3.3'
-  gem.add_runtime_dependency "json", '~> 1.7.5'
+  gem.add_runtime_dependency "json", '~> 1.8.2'
   gem.add_runtime_dependency "lps", '~> 0.2.0'
   gem.add_runtime_dependency "elasticsearch", '~> 1.0.0'
 
