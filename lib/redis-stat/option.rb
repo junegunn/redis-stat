@@ -128,7 +128,7 @@ module Option
     end
 
     if options[:daemon] && options[:server_port].nil?
-      raise ArgumentError.new("--daemon option must be used in conjunction with --server option")
+      raise ArgumentError.new("--daemon option must be used with --server option")
     end
   end
 end
