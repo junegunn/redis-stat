@@ -3,11 +3,12 @@ require 'optparse'
 class RedisStat
 module Option
   DEFAULT = {
-    :hosts    => ['127.0.0.1:6379'],
-    :interval => 2,
-    :count    => nil,
-    :csv      => nil,
-    :style    => :unicode
+    :hosts      => ['127.0.0.1:6379'],
+    :interval   => 2,
+    :count      => nil,
+    :csv_file   => nil,
+    :csv_output => false,
+    :style      => :unicode
   }
 
   def self.parse argv
@@ -34,8 +35,12 @@ module Option
         options[:mono] = true
       end
 
-      opts.on('--csv=OUTPUT_CSV_FILE_PATH', 'Save the result in CSV format') do |v|
-        options[:csv] = v
+      opts.on('--csv[=CSV_FILE]', 'Print or save the result in CSV') do |v|
+        if v
+          options[:csv_file] = v
+        else
+          options[:csv_output] = true
+        end
       end
 
       opts.on('--es=ELASTICSEARCH_URL', 'Send results to ElasticSearch: [http://]HOST[:PORT][/INDEX]') do |v|

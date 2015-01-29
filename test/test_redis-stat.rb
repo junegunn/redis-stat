@@ -52,7 +52,8 @@ class TestRedisStat < MiniTest::Unit::TestCase
       :hosts => ['localhost:1000'],
       :interval => 20,
       :count => nil,
-      :csv => nil,
+      :csv_file => nil,
+      :csv_output => false,
       :style => :unicode
     }.sort, options.sort)
 
@@ -61,7 +62,8 @@ class TestRedisStat < MiniTest::Unit::TestCase
       :hosts => ['localhost:1000'],
       :interval => 20,
       :count => 30,
-      :csv => nil,
+      :csv_file => nil,
+      :csv_output => false,
       :style => :unicode
     }.sort, options.sort)
 
@@ -70,7 +72,8 @@ class TestRedisStat < MiniTest::Unit::TestCase
       :hosts => ['127.0.0.1:6379'],
       :interval => 20,
       :count => nil,
-      :csv => nil,
+      :csv_file => nil,
+      :csv_output => false,
       :style => :unicode
     }.sort, options.sort)
 
@@ -79,7 +82,8 @@ class TestRedisStat < MiniTest::Unit::TestCase
       :hosts => ['127.0.0.1:6379'],
       :interval => 20,
       :count => 30,
-      :csv => nil,
+      :csv_file => nil,
+      :csv_output => false,
       :style => :unicode
     }.sort, options.sort)
 
@@ -89,7 +93,8 @@ class TestRedisStat < MiniTest::Unit::TestCase
       :hosts => ['localhost:8888'],
       :interval => 10,
       :count => nil,
-      :csv => '/tmp/a.csv',
+      :csv_file => '/tmp/a.csv',
+      :csv_output => false,
       :style => :ascii
     }.sort, options.sort)
 
@@ -99,7 +104,8 @@ class TestRedisStat < MiniTest::Unit::TestCase
       :hosts => ['localhost:8888'],
       :interval => 10,
       :count => nil,
-      :csv => '/tmp/a.csv',
+      :csv_file => '/tmp/a.csv',
+      :csv_output => false,
       :style => :ascii
     }.sort, options.sort)
 
@@ -109,7 +115,20 @@ class TestRedisStat < MiniTest::Unit::TestCase
       :hosts => ['localhost:8888'],
       :interval => 10,
       :count => nil,
-      :csv => '/tmp/a.csv',
+      :csv_file => '/tmp/a.csv',
+      :csv_output => false,
+      :style => :ascii,
+      :es => %w[http://localhost index]
+    }.sort, options.sort)
+
+    options = RedisStat::Option.parse(%w[-h localhost:8888 10 -a password --csv --style=ascii --es=localhost/index])
+    assert_equal({
+      :auth => 'password',
+      :hosts => ['localhost:8888'],
+      :interval => 10,
+      :count => nil,
+      :csv_file => nil,
+      :csv_output => true,
       :style => :ascii,
       :es => %w[http://localhost index]
     }.sort, options.sort)
@@ -126,7 +145,8 @@ class TestRedisStat < MiniTest::Unit::TestCase
         :hosts => ['localhost:8888'],
         :interval => 10,
         :count => nil,
-        :csv => '/tmp/a.csv',
+        :csv_file => '/tmp/a.csv',
+        :csv_output => false,
         :server_port => "5555",
         :style => :ascii,
         :daemon => true
@@ -160,7 +180,7 @@ class TestRedisStat < MiniTest::Unit::TestCase
     csv = '/tmp/redis-stat.csv'
     cnt = 100
     rs = RedisStat.new :hosts => %w[localhost] * 5, :interval => 0.01, :count => cnt,
-            :verbose => true, :csv => csv, :auth => 'pw'
+            :verbose => true, :csv_file => csv, :auth => 'pw'
     rs.start $stdout
 
     assert_equal cnt + 1, File.read(csv).lines.to_a.length

@@ -37,7 +37,8 @@ class RedisStat
     }
     @max_count     = options[:count]
     @colors        = options[:colors] || COLORS
-    @csv           = options[:csv]
+    @csv_file      = options[:csv_file]
+    @csv_output    = options[:csv_output]
     @auth          = options[:auth]
     @verbose       = options[:verbose]
     @measures      = MEASURES[ @verbose ? :verbose : :default ].map { |m| [*m].first }
@@ -53,13 +54,33 @@ class RedisStat
     @elasticsearch = options[:es] && ElasticsearchSink.new(@hosts, options[:es])
   end
 
-  def start output_stream
+  def output_stream! stream
+    if @csv_output
+      class << $stderr
+        alias puts! puts
+        def puts(*args); end
+        def print(*args); end
+      end
+      $stderr
+    else
+      class << stream
+        alias puts! puts
+      end
+      stream
+    end
+  end
+
+  def start stream
     @started_at = Time.now
-    @os = output_stream
+    @os = output_stream!(stream)
     trap('INT') { Thread.main.raise Interrupt }
 
     begin
-      csv = File.open(File.expand_path(@csv), 'w') if @csv
+      csv = if @csv_file
+              File.open(File.expand_path(@csv_file), 'w')
+            elsif @csv_output
+              $stdout
+            end
       update_term_size!
       authenticate!
 
@@ -108,7 +129,7 @@ class RedisStat
         end
         error_messages = format_exceptions(exceptions)
         info_output = @measures.map { |key| [key, info_output_all[key][:sum]] }
-        unless @daemonized
+        if !@daemonized && !@csv_output
           output_static_info info if @count == 0
           output_term info_output, error_messages
         end
@@ -123,7 +144,7 @@ class RedisStat
       @os.puts
     rescue Interrupt
       @os.puts
-      @os.puts "Interrupted.".yellow.bold
+      @os.puts! "Interrupted.".yellow.bold
       if @server_thr
         @server_thr.raise Interrupt
         @server_thr.join
@@ -131,12 +152,12 @@ class RedisStat
     rescue SystemExit
       raise
     rescue Exception => e
-      @os.puts e.to_s.red.bold
+      @os.puts! e.to_s.red.bold
       raise
     ensure
       csv.close if csv
     end
-    @os.puts "Elapsed: #{"%.2f" % (Time.now - @started_at)} sec.".blue.bold
+    @os.puts! "Elapsed: #{"%.2f" % (Time.now - @started_at)} sec.".blue.bold
   end
 
 private
@@ -289,7 +310,7 @@ private
   end
 
   def output_term_errors! error_messages
-    @os.puts error_messages.join($/).red.bold
+    @os.puts! error_messages.join($/).red.bold
   end
 
   def output_term info_output, error_messages
