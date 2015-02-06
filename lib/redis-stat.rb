@@ -147,7 +147,10 @@ class RedisStat
       @os.puts! "Interrupted.".yellow.bold
       if @server_thr
         @server_thr.raise Interrupt
-        @server_thr.join
+        begin
+          @server_thr.join
+        rescue Interrupt
+        end
       end
     rescue SystemExit
       raise
