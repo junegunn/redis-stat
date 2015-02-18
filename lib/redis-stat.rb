@@ -500,7 +500,8 @@ private
   end
 
   def need_auth? e
-    @auth && e.is_a?(Redis::CommandError) && e.to_s =~ /operation not permitted/
+    @auth && e.is_a?(Redis::CommandError) &&
+      e.to_s =~ /NOAUTH|operation not permitted/
   end
 
   def authenticate!
