@@ -28,13 +28,14 @@ class RedisStat
 
     @hosts         = options[:hosts]
     @interval      = options[:interval]
-    @redises       = @hosts.inject({}) { |hash, e|
+    @redises       = @hosts.each_with_object({}) do |e, hash|
       host, port   = e.split(':')
-      hash[e] = Redis.new(Hash[ {:host => host,
-                                 :port => port,
-                                 :timeout => @interval}.select { |k, v| v } ])
-      hash
-    }
+      hash[e] = Redis.new({
+        :host => host,
+        :port => port,
+        :timeout => @interval
+      })
+    end
     @max_count     = options[:count]
     @colors        = options[:colors] || COLORS
     @csv_file      = options[:csv_file]
