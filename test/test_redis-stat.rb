@@ -163,7 +163,7 @@ class TestRedisStat < MiniTest::Unit::TestCase
       %w[localhost 5 0]
     ].each do |argv|
       assert_raises(SystemExit) {
-        options = RedisStat::Option.parse(argv)
+        RedisStat::Option.parse(argv)
       }
     end
 
@@ -230,4 +230,3 @@ class TestRedisStat < MiniTest::Unit::TestCase
     end
   end
 end
-
