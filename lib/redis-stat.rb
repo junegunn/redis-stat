@@ -258,8 +258,18 @@ private
       end
     end
 
-    @term_width  = (`tput cols`  rescue DEFAULT_TERM_WIDTH).to_i
-    @term_height = (`tput lines` rescue DEFAULT_TERM_HEIGHT).to_i - 4
+    @term_width, @term_height = tput_term_size
+  end
+
+  def tput_term_size
+    return [DEFAULT_TERM_WIDTH, DEFAULT_TERM_HEIGHT - 4] if @term_fixed
+
+    dim = %w[cols lines].map { |attr| (`tput #{attr}` || nil).to_i }
+    if dim.index(0)
+      @term_fixed = true
+      return tput_term_size
+    end
+    [dim.first, dim.last - 4]
   end
 
   def move! lines
