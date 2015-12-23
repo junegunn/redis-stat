@@ -8,7 +8,7 @@ module Option
     :count      => nil,
     :csv_file   => nil,
     :csv_output => false,
-    :style      => :unicode
+    :style      => :unicode,
   }
 
   def self.parse argv
@@ -45,6 +45,11 @@ module Option
 
       opts.on('--es=ELASTICSEARCH_URL', 'Send results to ElasticSearch: [http://]HOST[:PORT][/INDEX]') do |v|
         options[:es] = RedisStat::ElasticsearchSink.parse_url v
+        options[:tags] = [] unless options[:tags]
+      end
+
+      opts.on('--estags=ELASTICSEARCH_TAGS', 'List of comma seperated tags to add ro results sent to ElasticSearch: tag1,tag2') do |v|
+        options[:tags] = v.split(',')
       end
 
       opts.separator ''

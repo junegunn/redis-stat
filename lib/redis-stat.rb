@@ -51,7 +51,7 @@ class RedisStat
     @server_port   = options[:server_port]
     @server_thr    = nil
     @daemonized    = options[:daemon]
-    @elasticsearch = options[:es] && ElasticsearchSink.new(@hosts, options[:es])
+    @elasticsearch = options[:es] && ElasticsearchSink.new(@hosts, options[:es], options[:tags])
   end
 
   def output_stream! stream

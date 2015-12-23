@@ -21,9 +21,10 @@ class ElasticsearchSink
     [uri.to_s, index]
   end
 
-  def initialize hosts, elasticsearch
+  def initialize hosts, elasticsearch, tags = nil
     url, @index  = elasticsearch
     @hosts       = hosts
+    @tags = tags || []
     @client      = Elasticsearch::Client.new :url => url
   end
 
@@ -43,7 +44,8 @@ class ElasticsearchSink
         :body  => entries.merge({
           :@timestamp => format_time(time),
           :host       => host,
-          :at         => time.to_f
+          :at         => time.to_f,
+          :tags       => @tags
         }),
       }
 
