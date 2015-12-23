@@ -24,7 +24,7 @@ class ElasticsearchSink
   def initialize hosts, elasticsearch, tags = nil
     url, @index  = elasticsearch
     @hosts       = hosts
-    @tags = tags || []
+    @tags        = tags || []
     @client      = Elasticsearch::Client.new :url => url
   end
 

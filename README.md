@@ -31,6 +31,7 @@ usage: redis-stat [HOST[:PORT] ...] [INTERVAL [COUNT]]
         --no-color                   Suppress ANSI color codes
         --csv=OUTPUT_CSV_FILE_PATH   Save the result in CSV format
         --es=ELASTICSEARCH_URL       Send results to ElasticSearch: [http://]HOST[:PORT][/INDEX]
+        --estags=ELASTICSEARCH_TAGS  List of comma seperated tags to add ro results sent to ElasticSearch: tag1,tag2
 
         --server[=PORT]              Launch redis-stat web server (default port: 63790)
         --daemon                     Daemonize redis-stat. Must be used with --server option.
@@ -91,6 +92,7 @@ printed as they are not supported in the default Windows command prompt.
 - [Chris Meisl](https://github.com/cmeisl)
 - [Hyunseok Hwang](https://github.com/frhwang)
 - [Sent Hil](https://github.com/sent-hil)
+- [Salvatore Poliandro](https://github.com/popsikle)
 
 ## Contributing
 
