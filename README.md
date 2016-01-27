@@ -78,6 +78,26 @@ killall -9 redis-stat-daemon
 
 ![Dashboard](https://github.com/junegunn/redis-stat/raw/master/screenshots/redis-stat-web.png)
 
+## redis-stat in Docker
+
+_redis-stat_ has packaged into a 15Mb Alpine-linux docker image and has been pushed to
+[Docker Hub](https://hub.docker.com/r/richardhull/redis-stat/). The image is built from the
+`Dockerfile` in this project.
+
+A new image can be locally provisioned and started with:
+
+```
+docker build redis-stat .`
+docker run --name redis-stat -d -p 63790:63790 redis-stat --server 192.165.1.54
+```
+
+To pull the pre-built image:
+
+```
+docker pull richardhull/redis-stat
+docker run --name redis-stat -d -p 63790:63790 richardhull/redis-stat --server 192.165.1.54
+```
+
 ## Windows support
 
 If you're running Windows, you can only install redis-stat on
@@ -91,6 +111,7 @@ printed as they are not supported in the default Windows command prompt.
 - [Chris Meisl](https://github.com/cmeisl)
 - [Hyunseok Hwang](https://github.com/frhwang)
 - [Sent Hil](https://github.com/sent-hil)
+- [Richard Hull](https://github.com/rm-hull)
 
 ## Contributing
 
