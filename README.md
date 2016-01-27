@@ -10,6 +10,25 @@ _redis-stat_ allows you to monitor Redis instances
 - either with vmstat-like output from the terminal
 - or with the dashboard page served by its embedded web server.
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Installation](#installation)
+- [Usage](#usage)
+- [Running redis-stat for command-line monitoring](#running-redis-stat-for-command-line-monitoring)
+  - [Screenshot](#screenshot)
+- [redis-stat in web browser](#redis-stat-in-web-browser)
+  - [Screenshot](#screenshot-1)
+- [redis-stat in Docker](#redis-stat-in-docker)
+- [Windows support](#windows-support)
+- [Author](#author)
+- [Contributors](#contributors)
+- [Contributing](#contributing)
+- [About the name _redis-stat_](#about-the-name-_redis-stat_)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## Installation
 
 ```
