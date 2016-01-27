@@ -99,9 +99,9 @@ killall -9 redis-stat-daemon
 
 ## redis-stat in Docker
 
-_redis-stat_ has packaged into a 15Mb Alpine-linux docker image and has been pushed to
-[Docker Hub](https://hub.docker.com/r/richardhull/redis-stat/). The image is built from the
-`Dockerfile` in this project.
+_redis-stat_ has been packaged into a 15Mb Alpine-linux docker image and pushed
+to [Docker Hub](https://hub.docker.com/r/richardhull/redis-stat/). The image is
+built from the `Dockerfile` in this project.
 
 A new image can be locally provisioned and started with:
 
