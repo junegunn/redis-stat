@@ -10,6 +10,25 @@ _redis-stat_ allows you to monitor Redis instances
 - either with vmstat-like output from the terminal
 - or with the dashboard page served by its embedded web server.
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [Installation](#installation)
+- [Usage](#usage)
+- [Running redis-stat for command-line monitoring](#running-redis-stat-for-command-line-monitoring)
+  - [Screenshot](#screenshot)
+- [redis-stat in web browser](#redis-stat-in-web-browser)
+  - [Screenshot](#screenshot-1)
+- [redis-stat in Docker](#redis-stat-in-docker)
+- [Windows support](#windows-support)
+- [Author](#author)
+- [Contributors](#contributors)
+- [Contributing](#contributing)
+- [About the name _redis-stat_](#about-the-name-_redis-stat_)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## Installation
 
 ```
@@ -78,6 +97,26 @@ killall -9 redis-stat-daemon
 
 ![Dashboard](https://github.com/junegunn/redis-stat/raw/master/screenshots/redis-stat-web.png)
 
+## redis-stat in Docker
+
+_redis-stat_ has been packaged into a 15Mb Alpine-linux docker image and pushed
+to [Docker Hub](https://hub.docker.com/r/richardhull/redis-stat/). The image is
+built from the `Dockerfile` in this project.
+
+A new image can be locally provisioned and started with:
+
+```
+docker build redis-stat .`
+docker run --name redis-stat -d -p 63790:63790 redis-stat --server 192.165.1.54
+```
+
+To pull the pre-built image:
+
+```
+docker pull richardhull/redis-stat
+docker run --name redis-stat -d -p 63790:63790 richardhull/redis-stat --server 192.165.1.54
+```
+
 ## Windows support
 
 If you're running Windows, you can only install redis-stat on
@@ -91,6 +130,7 @@ printed as they are not supported in the default Windows command prompt.
 - [Chris Meisl](https://github.com/cmeisl)
 - [Hyunseok Hwang](https://github.com/frhwang)
 - [Sent Hil](https://github.com/sent-hil)
+- [Richard Hull](https://github.com/rm-hull)
 
 ## Contributing
 
