@@ -28,10 +28,13 @@ class RedisStat
 
     @hosts         = options[:hosts]
     @interval      = options[:interval]
+    @auth          = options[:auth]
     @redises       = @hosts.inject({}) { |hash, e|
-      host, port   = e.split(':')
+      hostport, password = e.split('/')
+      host, port = hostport.split(':')
       hash[e] = Redis.new(Hash[ {:host => host,
                                  :port => port,
+                                 :password => password || @auth,
                                  :timeout => @interval}.select { |k, v| v } ])
       hash
     }
@@ -39,7 +42,6 @@ class RedisStat
     @colors        = options[:colors] || COLORS
     @csv_file      = options[:csv_file]
     @csv_output    = options[:csv_output]
-    @auth          = options[:auth]
     @verbose       = options[:verbose]
     @measures      = MEASURES[ @verbose ? :verbose : :default ].map { |m| [*m].first }
     @tab_measures  = MEASURES[:static].map { |m| [*m].first }
@@ -82,7 +84,6 @@ class RedisStat
               $stdout
             end
       update_term_size!
-      authenticate!
 
       # Initial info collection
       info, x = collect
@@ -113,11 +114,6 @@ class RedisStat
           rescue Interrupt
             raise
           end
-
-        if exceptions.any? { |k, v| need_auth? v }
-          authenticate!
-          next
-        end
 
         info_output_all = process info, prev_info
         begin
@@ -507,16 +503,5 @@ private
       str = str.send color
     end
     str
-  end
-
-  def need_auth? e
-    @auth && e.is_a?(Redis::CommandError) &&
-      e.to_s =~ /NOAUTH|operation not permitted/
-  end
-
-  def authenticate!
-    @redises.values.each do |r|
-      r.ping rescue (r.auth @auth)
-    end if @auth
   end
 end

@@ -23,7 +23,7 @@ it instead.
 ## Usage
 
 ```
-usage: redis-stat [HOST[:PORT] ...] [INTERVAL [COUNT]]
+usage: redis-stat [HOST[:PORT][/PASS] ...] [INTERVAL [COUNT]]
 
     -a, --auth=PASSWORD              Password
     -v, --verbose                    Show more info

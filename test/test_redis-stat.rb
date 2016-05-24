@@ -181,7 +181,7 @@ class TestRedisStat < MiniTest::Test
     csv = '/tmp/redis-stat.csv'
     cnt = 100
     rs = RedisStat.new :hosts => %w[localhost] * 5, :interval => 0.01, :count => cnt,
-            :verbose => true, :csv_file => csv, :auth => 'pw'
+            :verbose => true, :csv_file => csv
     rs.start $stdout
 
     assert_equal cnt + 1, File.read(csv).lines.to_a.length
@@ -192,7 +192,7 @@ class TestRedisStat < MiniTest::Test
   def test_mono
     [true, false].each do |mono|
       rs = RedisStat.new :hosts => %w[localhost] * 5, :interval => 0.02, :count => 20,
-                         :verbose => true, :auth => 'pw', :mono => mono
+                         :verbose => true, :mono => mono
       output = StringIO.new
       rs.start output
       puts output.string
@@ -206,8 +206,7 @@ class TestRedisStat < MiniTest::Test
     r2 = Redis.new(:host => 'localhost', :port => 6380)
 
     if r1.info['redis_version'] =~ /^2\.4/ && r2.info['redis_version'] =~ /^2\.2/
-      rs = RedisStat.new :hosts => %w[localhost:6380 localhost], :interval => 1, :count => 1,
-            :auth => 'pw', :style => :ascii
+      rs = RedisStat.new :hosts => %w[localhost:6380 localhost], :interval => 1, :count => 1, :style => :ascii
       output = StringIO.new
       rs.start output
       vline = output.string.lines.select { |line| line =~ /gcc_version/ }.first
