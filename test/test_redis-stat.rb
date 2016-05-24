@@ -2,14 +2,15 @@
 # encoding: utf-8
 
 $VERBOSE = true
-$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+$LOAD_PATH.unshift(File.expand_path('../lib', __FILE__))
 require 'rubygems'
+require 'bundler/setup'
 require 'redis-stat'
 require 'redis'
 require 'stringio'
 require 'minitest/autorun'
 
-class TestRedisStat < MiniTest::Unit::TestCase
+class TestRedisStat < MiniTest::Test
   def test_humanize_number
     rs = RedisStat.new
     assert_equal '0', rs.send(:humanize_number, 0.00)

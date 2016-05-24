@@ -84,14 +84,6 @@ If you're running Windows, you can only install redis-stat on
 [JRuby](http://jruby.org/). Notice that fancy terminal colors will not be
 printed as they are not supported in the default Windows command prompt.
 
-## Author
-- [Junegunn Choi](https://github.com/junegunn)
-
-## Contributors
-- [Chris Meisl](https://github.com/cmeisl)
-- [Hyunseok Hwang](https://github.com/frhwang)
-- [Sent Hil](https://github.com/sent-hil)
-
 ## Contributing
 
 1. Fork it
@@ -99,6 +91,15 @@ printed as they are not supported in the default Windows command prompt.
 3. Commit your changes (`git commit -am 'Added some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
+
+### Test
+
+You need two Redis servers running on localhost with port 6379 and 6380 with
+no password.
+
+```sh
+bundle install
+bundle exec rake test
 
 ## About the name _redis-stat_
 

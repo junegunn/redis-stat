@@ -27,6 +27,8 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency "json", '~> 1.8.2'
   gem.add_runtime_dependency "lps", '~> 0.2.0'
   gem.add_runtime_dependency "elasticsearch", '~> 1.0.0'
+  gem.add_development_dependency "minitest"
+  gem.add_development_dependency "rake"
 
   if RUBY_PLATFORM == 'java'
     gem.add_runtime_dependency "puma", '~> 2.3.2'
