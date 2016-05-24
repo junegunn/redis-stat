@@ -29,9 +29,10 @@ class RedisStat
     @hosts         = options[:hosts]
     @interval      = options[:interval]
     @redises       = @hosts.inject({}) { |hash, e|
-      host, port   = e.split(':')
+      host, port, pass   = e.split(':')
       hash[e] = Redis.new(Hash[ {:host => host,
                                  :port => port,
+                                 :password => pass,
                                  :timeout => @interval}.select { |k, v| v } ])
       hash
     }
