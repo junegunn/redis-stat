@@ -455,7 +455,7 @@ private
       })
       [humanize_number(val), val]
     when :evicted_keys_per_second, :expired_keys_per_second, :keyspace_hits_per_second,
-         :keyspace_misses_per_second, :total_commands_processed_per_second
+         :keyspace_misses_per_second, :total_commands_processed_per_second, :rejected_connections_per_second
       val = get_diff.call(key.to_s.gsub(/_per_second$/, '').to_sym)
       [humanize_number(val), val]
     when :used_memory, :used_memory_rss, :aof_current_size, :aof_base_size
