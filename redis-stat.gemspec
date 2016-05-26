@@ -31,7 +31,9 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency "rake"
 
   if RUBY_PLATFORM == 'java'
-    gem.add_runtime_dependency "puma", '~> 2.3.2'
+    gem.add_runtime_dependency "puma", "~> 2.3.2"
+    gem.add_runtime_dependency "jruby-jars", "1.7.19"
+    gem.add_development_dependency "warbler", "1.4.9"
   else
     gem.add_runtime_dependency "thin", '~> 1.5.0'
     gem.add_runtime_dependency "daemons", '~> 1.1.9'
