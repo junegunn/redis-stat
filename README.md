@@ -100,6 +100,7 @@ no password.
 ```sh
 bundle install
 bundle exec rake test
+```
 
 ## About the name _redis-stat_
 
