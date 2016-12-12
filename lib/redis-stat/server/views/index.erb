@@ -2,32 +2,32 @@
 <html>
   <head>
     <title>redis-stat</title>
-    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet"/>
-    <link href="/jqplot/jquery.jqplot.min.css" rel="stylesheet"/>
-    <link href="/select2/select2.css" rel="stylesheet"/>
-    <link href="/select2/select2-bootstrap.css" rel="stylesheet"/>
-    <link href="/css/site.css" rel="stylesheet"/>
-    <script type="text/javascript" src="/jquery-1.8.2.min.js"></script>
-    <script type="text/javascript" src="/jqplot/jquery.jqplot.min.js"></script>
-    <script type="text/javascript" src="/jqplot/jqplot.canvasTextRenderer.min.js"></script>
-    <script type="text/javascript" src="/jqplot/jqplot.canvasAxisLabelRenderer.min.js"></script>
-    <script type="text/javascript" src="/jqplot/jqplot.canvasAxisTickRenderer.min.js"></script>
-    <script type="text/javascript" src="/select2/select2.min.js"></script>
-    <script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="/js/site.js"></script>
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="jqplot/jquery.jqplot.min.css" rel="stylesheet"/>
+    <link href="select2/select2.css" rel="stylesheet"/>
+    <link href="select2/select2-bootstrap.css" rel="stylesheet"/>
+    <link href="css/site.css" rel="stylesheet"/>
+    <script type="text/javascript" src="jquery-1.8.2.min.js"></script>
+    <script type="text/javascript" src="jqplot/jquery.jqplot.min.js"></script>
+    <script type="text/javascript" src="jqplot/jqplot.canvasTextRenderer.min.js"></script>
+    <script type="text/javascript" src="jqplot/jqplot.canvasAxisLabelRenderer.min.js"></script>
+    <script type="text/javascript" src="jqplot/jqplot.canvasAxisTickRenderer.min.js"></script>
+    <script type="text/javascript" src="select2/select2.min.js"></script>
+    <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/site.js"></script>
   </head>
   <body>
     <div class="navbar navbar-fixed-top">
       <div class="navbar-inner">
         <div class="container">
-          <a class="brand" href="/">redis-stat</a>
+          <a class="brand" href="./">redis-stat</a>
           <% if @hosts.length > 1 %>
             <ul class="nav">
               <li>
                 <select id="hostlist" class="select2 input-default">
-                  <option value="/"<%= ' selected' unless @selected %>>All instances</option>
+                  <option value="./"<%= ' selected' unless @selected %>>All instances</option>
                   <% @hosts.each do |host| %>
-                  <option value="/?host=<%= URI.escape host %>"<%= ' selected' if @selected == host %>><%= host %></option>
+                  <option value="./?host=<%= URI.escape host %>"<%= ' selected' if @selected == host %>><%= host %></option>
                   <% end %>
                 </select>
               </li>
@@ -157,7 +157,7 @@
 
         // TODO Check (typeof(EventSource) !== "undefined")
 
-        var source = new EventSource("/pull")
+        var source = new EventSource("./pull")
         source.onmessage = function(e) {
           var alert = $(".alert");
           var json = JSON.parse(e.data);
