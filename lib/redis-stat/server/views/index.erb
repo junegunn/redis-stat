@@ -25,9 +25,9 @@
             <ul class="nav">
               <li>
                 <select id="hostlist" class="select2 input-default">
-                  <option value="/"<%= ' selected' unless @selected %>>All instances</option>
+                  <option value="./"<%= ' selected' unless @selected %>>All instances</option>
                   <% @hosts.each do |host| %>
-                  <option value="/?host=<%= URI.escape host %>"<%= ' selected' if @selected == host %>><%= host %></option>
+                  <option value="./?host=<%= URI.escape host %>"<%= ' selected' if @selected == host %>><%= host %></option>
                   <% end %>
                 </select>
               </li>
@@ -157,7 +157,7 @@
 
         // TODO Check (typeof(EventSource) !== "undefined")
 
-        var source = new EventSource("/pull")
+        var source = new EventSource("./pull")
         source.onmessage = function(e) {
           var alert = $(".alert");
           var json = JSON.parse(e.data);
